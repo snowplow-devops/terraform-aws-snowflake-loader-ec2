@@ -4,20 +4,7 @@ locals {
 
 data "aws_region" "current" {}
 
-module "telemetry" {
-  source  = "snowplow-devops/telemetry/snowplow"
-  version = "0.2.0"
-
-  count = var.telemetry_enabled ? 1 : 0
-
-  user_provided_id = var.user_provided_id
-  cloud            = "AWS"
-  region           = data.aws_region.current.name
-  app_name         = local.app_name
-  app_version      = local.app_version
-  module_name      = local.module_name
-  module_version   = local.module_version
-}
+data "aws_caller_identity" "current" {}
 
 data "aws_ami" "amazon_linux_2" {
   most_recent = true
@@ -48,7 +35,7 @@ resource "aws_cloudwatch_log_group" "log_group" {
   name              = local.cloudwatch_log_group_name
   retention_in_days = var.cloudwatch_logs_retention_days
 
-  tags = local.tags
+  tags = var.tags
 }
 
 # --- IAM: Roles & Permissions
@@ -56,7 +43,7 @@ resource "aws_cloudwatch_log_group" "log_group" {
 resource "aws_iam_role" "iam_role" {
   name        = "${var.name}-snowflake-loader"
   description = "Allows the Loader nodes to access required services"
-  tags        = local.tags
+  tags        = var.tags
 
   assume_role_policy = <<EOF
 {
@@ -137,7 +124,7 @@ resource "aws_iam_instance_profile" "instance_profile" {
 resource "aws_security_group" "sg" {
   name   = "${var.name}-snowflake-loader"
   vpc_id = var.vpc_id
-  tags   = local.tags
+  tags   = var.tags
 }
 
 resource "aws_security_group_rule" "ingress_tcp_22" {
@@ -235,9 +222,9 @@ locals {
   user_data = templatefile("${path.module}/templates/user-data.sh.tmpl", {
     config        = local.config
     iglu_resolver = local.iglu_resolver
-    version       = local.app_version
+    version       = var.app_version
 
-    telemetry_script = join("", module.telemetry.*.amazon_linux_2_user_data)
+    telemetry_script = var.telemetry_script
 
     cloudwatch_logs_enabled   = var.cloudwatch_logs_enabled
     cloudwatch_log_group_name = local.cloudwatch_log_group_name
@@ -273,7 +260,7 @@ module "tags" {
   source  = "snowplow-devops/tags/aws"
   version = "0.1.2"
 
-  tags = local.tags
+  tags = var.tags
 }
 
 resource "aws_autoscaling_group" "asg" {

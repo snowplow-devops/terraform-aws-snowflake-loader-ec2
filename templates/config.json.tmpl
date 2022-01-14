@@ -1,0 +1,28 @@
+{
+  # Data Lake (S3) region
+  # This field is optional if it can be resolved with AWS region provider chain.
+  # It checks places like env variables, system properties, AWS profile file.
+  # https://sdk.amazonaws.com/java/api/latest/software/amazon/awssdk/regions/providers/DefaultAwsRegionProviderChain.html
+  "region": "${region}",
+
+  # SQS topic name used by Shredder and Loader to communicate
+  "messageQueue": "${message_queue}",
+
+  # Warehouse connection details
+  "storage" : {
+    # Redshift hostname
+    "host": "${host}",
+    # Database name
+    "database": "${database}",
+    # Database port. Optional, default value 5439
+    "port": ${port},
+    # AWS Role ARN allowing Redshift to load data from S3
+    "roleArn": "${role_arn}",
+    # DB schema name
+    "schema": "${schema}",
+    # DB user with permissions to load data
+    "username": "${redshift_username}",
+    # DB password
+    "password": "${redshift_password}"
+  }
+}

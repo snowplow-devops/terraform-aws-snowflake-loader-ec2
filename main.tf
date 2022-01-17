@@ -48,13 +48,6 @@ module "loader" {
   telemetry_script = join("", module.telemetry.*.amazon_linux_2_user_data)
   
   sqs_queue_name = var.sqs_queue_name
-  db_host = var.db_host
-  db_name = var.db_name
-  db_port = var.db_port
-  db_role_arn = var.db_role_arn
-  db_schema = var.db_schema
-  db_username = var.db_username
-  db_password = var.db_password
 
   default_iglu_resolvers = var.default_iglu_resolvers
   custom_iglu_resolvers = var.custom_iglu_resolvers

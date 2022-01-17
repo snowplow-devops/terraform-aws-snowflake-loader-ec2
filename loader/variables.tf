@@ -71,41 +71,6 @@ variable "sqs_queue_name" {
   type        = string
 }
 
-variable "db_host" {
-  description = "Redshift database host"
-  type        = string
-}
-
-variable "db_name" {
-  description = "Redshift database name"
-  type        = string
-}
-
-variable "db_port" {
-  description = "Redshift database port"
-  type        = string
-}
-
-variable "db_role_arn" {
-  description = "AWS Role ARN allowing Redshift to load data from S3"
-  type        = string
-}
-
-variable "db_schema" {
-  description = "DB schema name"
-  type        = string
-}
-
-variable "db_username" {
-  description = "DB user with permissions to load data"
-  type        = string
-}
-
-variable "db_password" {
-  description = "DB password"
-  type        = string
-}
-
 # --- Iglu Resolver
 
 variable "default_iglu_resolvers" {

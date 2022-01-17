@@ -11,18 +11,18 @@
   # Warehouse connection details
   "storage" : {
     # Redshift hostname
-    "host": "${host}",
+    "host": "db_host",
     # Database name
-    "database": "${database}",
+    "database": "db_name",
     # Database port. Optional, default value 5439
-    "port": ${port},
+    "port": 5439,
     # AWS Role ARN allowing Redshift to load data from S3
-    "roleArn": "${role_arn}",
+    "roleArn": "db_role",
     # DB schema name
-    "schema": "${schema}",
+    "schema": "db_schema",
     # DB user with permissions to load data
-    "username": "${redshift_username}",
+    "username": "db_username",
     # DB password
-    "password": "${redshift_password}"
+    "password": "db_pass"
   }
 }

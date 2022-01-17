@@ -210,13 +210,6 @@ locals {
   config = templatefile("${path.module}/templates/config.json.tmpl", {
     region  = data.aws_region.current.name
     message_queue = var.sqs_queue_name
-    host = var.db_host
-    database = var.db_name
-    port = var.db_port
-    role_arn = var.db_role_arn
-    schema = var.db_schema
-    redshift_username = var.db_username
-    redshift_password = var.db_password
   })
 
   user_data = templatefile("${path.module}/templates/user-data.sh.tmpl", {

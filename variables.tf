@@ -16,26 +16,6 @@ variable "stage_prefix" {
   type  = string
 }
 
-variable "sf_operator_username" {
-  type  = string
-}
-
-variable "sf_account" {
-  type  = string
-}
-
-variable "sf_region" {
-  type  = string
-}
-
-variable "sf_operator_user_role" {
-  type  = string
-}
-
-variable "sf_private_key_path" {
-  type  = string
-}
-
 variable "sf_db_name" {
   type  = string
 }

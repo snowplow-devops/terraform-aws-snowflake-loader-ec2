@@ -2,14 +2,6 @@ locals {
   sf_full_file_format_name = "${snowflake_file_format.enriched.database}.${snowflake_file_format.enriched.schema}.${snowflake_file_format.enriched.name}"
 }
 
-provider "snowflake" {
-  username = var.sf_operator_username
-  account  = var.sf_account
-  region   = var.sf_region
-  role     = var.sf_operator_user_role
-  private_key_path = var.sf_private_key_path
-}
-
 resource "snowflake_storage_integration" "integration" {
   name    = "${upper(var.name)}_SNOWFLAKE_STORAGE_INTEGRATION"
   type    = "EXTERNAL_STAGE"

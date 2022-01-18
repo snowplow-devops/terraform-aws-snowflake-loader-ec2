@@ -72,7 +72,6 @@ resource "snowflake_table_grant" "loader" {
   for_each = toset([
     "DELETE",
     "INSERT",
-    "OWNERSHIP",
     "REFERENCES",
     "SELECT",
     "TRUNCATE",

@@ -4,7 +4,7 @@ data "aws_iam_policy_document" "snowflake_load_policy" {
       "s3:GetObject",
       "s3:GetObjectVersion",
     ]
-    resources = ["arn:aws:s3:::${var.stage_bucket_name}/${var.stage_prefix}/*"]
+    resources = ["arn:aws:s3:::${var.stage_bucket_name}/${trimsuffix(var.stage_prefix, "/")}/*"]
   }
 
   statement {
@@ -15,7 +15,7 @@ data "aws_iam_policy_document" "snowflake_load_policy" {
     condition {
       test     = "StringLike"
       variable = "s3:prefix"
-      values = ["${var.stage_prefix}/*"]
+      values = ["${trimsuffix(var.stage_prefix, "/")}/*"]
     }
     resources = ["arn:aws:s3:::${var.stage_bucket_name}"]
   }

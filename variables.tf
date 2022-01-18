@@ -4,64 +4,77 @@ variable "name" {
 }
 
 variable "loader_enabled" {
+  description = "Specifies whether to deploy loader or not"
   type        = bool
   default     = true
 }
 
 variable "stage_bucket_name" {
-  type  = string
+  description = "Name of the S3 bucket which will be used as stage by Snowflake"
+  type        = string
 }
 
 variable "stage_prefix" {
-  type  = string
+  description = "Path prefix of S3 location which will be used as stage by Snowflake"
+  type        = string
 }
 
 variable "sf_db_name" {
-  type  = string
+  description = "The name of the database to connect to"
+  type        = string
 }
 
 variable "sf_wh_name" {
-  type  = string
+  description = "The name of the Snowflake warehouse to connect to"
+  type        = string
 }
 
 variable "sf_wh_size" {
-  default = "XSMALL"
-  type  = string
+  description = "Size of the Snowflake warehouse to connect to"
+  default     = "XSMALL"
+  type        = string
 }
 
 variable "sf_wh_auto_suspend" {
-  default = 60
-  type  = number
+  description = "Time period to wait before suspending warehouse"
+  default     = 60
+  type        = number
 }
 
 variable "sf_wh_auto_resume" {
-  default = true
-  type  = bool
+  description = "Whether to enable auto resume which makes automatically resume the warehouse when any statement that requires a warehouse is submitted "
+  default     = true
+  type        = bool
 }
 
 variable "sf_atomic_schema_name" {
-  default = "ATOMIC"
-  type = string
+  description = "Name of the atomic schema created in Snowflake"
+  default     = "ATOMIC"
+  type        = string
 }
 
 variable "sf_file_format_name" {
-  default = "SNOWPLOW_ENRICHED_JSON"
-  type = string
+  description = "Name of the Snowflake file format which is used by stage"
+  default     = "SNOWPLOW_ENRICHED_JSON"
+  type        = string
 }
 
 variable "sf_stage_name" {
-  default = "S3_STAGE"
-  type = string
+  description = "Snowflake stage which is used to copy events from S3 bucket to Snowflake"
+  default     = "S3_STAGE"
+  type        = string
 }
 
 variable "sf_loader_password" {
-  type = string
-  sensitive = true
+  description = "The password to use to connect to the database"
+  type        = string
+  sensitive   = true
 }
 
 variable "iam_permissions_boundary" {
-  default = ""
-  type  = string
+  description = "The permissions boundary ARN to set on IAM roles created"
+  default     = ""
+  type        = string
 }
 
 variable "vpc_id" {

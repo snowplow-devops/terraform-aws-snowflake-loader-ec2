@@ -55,6 +55,6 @@ resource "aws_iam_role" "snowflakedb_load_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "role_policy_attachment" {
-  role       = join("", aws_iam_role.snowflakedb_load_role.*.name)
-  policy_arn = join("", aws_iam_policy.snowflakedb_load_policy.*.arn)
+  role       = aws_iam_role.snowflakedb_load_role.name
+  policy_arn = aws_iam_policy.snowflakedb_load_policy.arn
 }

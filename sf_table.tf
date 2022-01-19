@@ -771,6 +771,12 @@ resource "snowflake_table" "events" {
     nullable = true
   }
 
+  column {
+    name     = "load_tstamp"
+    type     = "TIMESTAMP_NTZ(9)"
+    nullable = true
+  }
+
   primary_key {
     name = "event_id_pk"
     keys = ["event_id"]

@@ -36,7 +36,7 @@ resource "snowflake_file_format" "enriched" {
   binary_format = "HEX"
   date_format = "AUTO"
   time_format = "AUTO"
-  timestamp_format = "YYYY-MM-DD HH24:MI:SS.FF"
+  timestamp_format = "AUTO"
 }
 
 resource "snowflake_stage" "loader" {

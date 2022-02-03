@@ -3,782 +3,784 @@ resource "snowflake_table" "events" {
   schema   = snowflake_schema.atomic.name
   name     = "EVENTS"
 
+
   column {
-    name     = "app_id"
+    name     = "APP_ID"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "platform"
+    name     = "PLATFORM"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "etl_tstamp"
+    name     = "ETL_TSTAMP"
     type     = "TIMESTAMP_NTZ(9)"
     nullable = true
   }
 
   column {
-    name     = "collector_tstamp"
+    name     = "COLLECTOR_TSTAMP"
     type     = "TIMESTAMP_NTZ(9)"
     nullable = false
   }
 
   column {
-    name     = "dvce_created_tstamp"
+    name     = "DVCE_CREATED_TSTAMP"
     type     = "TIMESTAMP_NTZ(9)"
     nullable = true
   }
 
   column {
-    name     = "event"
+    name     = "EVENT"
     type     = "VARCHAR(128)"
     nullable = true
   }
 
   column {
-    name     = "event_id"
+    name     = "EVENT_ID"
     type     = "VARCHAR(36)"
     nullable = false
   }
 
   column {
-    name     = "txn_id"
+    name     = "TXN_ID"
     type     = "NUMBER(38,0)"
     nullable = true
   }
 
   column {
-    name     = "name_tracker"
+    name     = "NAME_TRACKER"
     type     = "VARCHAR(128)"
     nullable = true
   }
 
   column {
-    name     = "v_tracker"
+    name     = "V_TRACKER"
     type     = "VARCHAR(100)"
     nullable = true
   }
 
   column {
-    name     = "v_collector"
+    name     = "V_COLLECTOR"
     type     = "VARCHAR(100)"
     nullable = false
   }
 
   column {
-    name     = "v_etl"
+    name     = "V_ETL"
     type     = "VARCHAR(100)"
     nullable = false
   }
 
   column {
-    name     = "user_id"
+    name     = "USER_ID"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "user_ipaddress"
+    name     = "USER_IPADDRESS"
     type     = "VARCHAR(128)"
     nullable = true
   }
 
   column {
-    name     = "user_fingerprint"
+    name     = "USER_FINGERPRINT"
     type     = "VARCHAR(128)"
     nullable = true
   }
 
   column {
-    name     = "domain_userid"
+    name     = "DOMAIN_USERID"
     type     = "VARCHAR(128)"
     nullable = true
   }
 
   column {
-    name     = "domain_sessionidx"
+    name     = "DOMAIN_SESSIONIDX"
     type     = "NUMBER(38,0)"
     nullable = true
   }
 
   column {
-    name     = "network_userid"
+    name     = "NETWORK_USERID"
     type     = "VARCHAR(128)"
     nullable = true
   }
 
   column {
-    name     = "geo_country"
+    name     = "GEO_COUNTRY"
     type     = "VARCHAR(2)"
     nullable = true
   }
 
   column {
-    name     = "geo_region"
+    name     = "GEO_REGION"
     type     = "VARCHAR(3)"
     nullable = true
   }
 
   column {
-    name     = "geo_city"
+    name     = "GEO_CITY"
     type     = "VARCHAR(75)"
     nullable = true
   }
 
   column {
-    name     = "geo_zipcode"
+    name     = "GEO_ZIPCODE"
     type     = "VARCHAR(15)"
     nullable = true
   }
 
   column {
-    name     = "geo_latitude"
+    name     = "GEO_LATITUDE"
     type     = "FLOAT"
     nullable = true
   }
 
   column {
-    name     = "geo_longitude"
+    name     = "GEO_LONGITUDE"
     type     = "FLOAT"
     nullable = true
   }
 
   column {
-    name     = "geo_region_name"
+    name     = "GEO_REGION_NAME"
     type     = "VARCHAR(100)"
     nullable = true
   }
 
   column {
-    name     = "ip_isp"
+    name     = "IP_ISP"
     type     = "VARCHAR(100)"
     nullable = true
   }
 
   column {
-    name     = "ip_organization"
+    name     = "IP_ORGANIZATION"
     type     = "VARCHAR(128)"
     nullable = true
   }
 
   column {
-    name     = "ip_domain"
+    name     = "IP_DOMAIN"
     type     = "VARCHAR(128)"
     nullable = true
   }
 
   column {
-    name     = "ip_netspeed"
+    name     = "IP_NETSPEED"
     type     = "VARCHAR(100)"
     nullable = true
   }
 
   column {
-    name     = "page_url"
+    name     = "PAGE_URL"
     type     = "VARCHAR(4096)"
     nullable = true
   }
 
   column {
-    name     = "page_title"
+    name     = "PAGE_TITLE"
     type     = "VARCHAR(2000)"
     nullable = true
   }
 
   column {
-    name     = "page_referrer"
+    name     = "PAGE_REFERRER"
     type     = "VARCHAR(4096)"
     nullable = true
   }
 
   column {
-    name     = "page_urlscheme"
+    name     = "PAGE_URLSCHEME"
     type     = "VARCHAR(16)"
     nullable = true
   }
 
   column {
-    name     = "page_urlhost"
+    name     = "PAGE_URLHOST"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "page_urlport"
+    name     = "PAGE_URLPORT"
     type     = "NUMBER(38,0)"
     nullable = true
   }
 
   column {
-    name     = "page_urlpath"
+    name     = "PAGE_URLPATH"
     type     = "VARCHAR(3000)"
     nullable = true
   }
 
   column {
-    name     = "page_urlquery"
+    name     = "PAGE_URLQUERY"
     type     = "VARCHAR(6000)"
     nullable = true
   }
 
   column {
-    name     = "page_urlfragment"
+    name     = "PAGE_URLFRAGMENT"
     type     = "VARCHAR(3000)"
     nullable = true
   }
 
   column {
-    name     = "refr_urlscheme"
+    name     = "REFR_URLSCHEME"
     type     = "VARCHAR(16)"
     nullable = true
   }
 
   column {
-    name     = "refr_urlhost"
+    name     = "REFR_URLHOST"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "refr_urlport"
+    name     = "REFR_URLPORT"
     type     = "NUMBER(38,0)"
     nullable = true
   }
 
   column {
-    name     = "refr_urlpath"
+    name     = "REFR_URLPATH"
     type     = "VARCHAR(6000)"
     nullable = true
   }
 
   column {
-    name     = "refr_urlquery"
+    name     = "REFR_URLQUERY"
     type     = "VARCHAR(6000)"
     nullable = true
   }
 
   column {
-    name     = "refr_urlfragment"
+    name     = "REFR_URLFRAGMENT"
     type     = "VARCHAR(3000)"
     nullable = true
   }
 
   column {
-    name     = "refr_medium"
+    name     = "REFR_MEDIUM"
     type     = "VARCHAR(25)"
     nullable = true
   }
 
   column {
-    name     = "refr_source"
+    name     = "REFR_SOURCE"
     type     = "VARCHAR(50)"
     nullable = true
   }
 
   column {
-    name     = "refr_term"
+    name     = "REFR_TERM"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "mkt_medium"
+    name     = "MKT_MEDIUM"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "mkt_source"
+    name     = "MKT_SOURCE"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "mkt_term"
+    name     = "MKT_TERM"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "mkt_content"
+    name     = "MKT_CONTENT"
     type     = "VARCHAR(500)"
     nullable = true
   }
 
   column {
-    name     = "mkt_campaign"
+    name     = "MKT_CAMPAIGN"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "se_category"
+    name     = "SE_CATEGORY"
     type     = "VARCHAR(1000)"
     nullable = true
   }
 
   column {
-    name     = "se_action"
+    name     = "SE_ACTION"
     type     = "VARCHAR(1000)"
     nullable = true
   }
 
   column {
-    name     = "se_label"
+    name     = "SE_LABEL"
     type     = "VARCHAR(4096)"
     nullable = true
   }
 
   column {
-    name     = "se_property"
+    name     = "SE_PROPERTY"
     type     = "VARCHAR(1000)"
     nullable = true
   }
 
   column {
-    name     = "se_value"
+    name     = "SE_VALUE"
     type     = "FLOAT"
     nullable = true
   }
 
   column {
-    name     = "tr_orderid"
+    name     = "TR_ORDERID"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "tr_affiliation"
+    name     = "TR_AFFILIATION"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "tr_total"
+    name     = "TR_TOTAL"
     type     = "NUMBER(18,2)"
     nullable = true
   }
 
   column {
-    name     = "tr_tax"
+    name     = "TR_TAX"
     type     = "NUMBER(18,2)"
     nullable = true
   }
 
   column {
-    name     = "tr_shipping"
+    name     = "TR_SHIPPING"
     type     = "NUMBER(18,2)"
     nullable = true
   }
 
   column {
-    name     = "tr_city"
+    name     = "TR_CITY"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "tr_state"
+    name     = "TR_STATE"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "tr_country"
+    name     = "TR_COUNTRY"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "ti_orderid"
+    name     = "TI_ORDERID"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "ti_sku"
+    name     = "TI_SKU"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "ti_name"
+    name     = "TI_NAME"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "ti_category"
+    name     = "TI_CATEGORY"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "ti_price"
+    name     = "TI_PRICE"
     type     = "NUMBER(18,2)"
     nullable = true
   }
 
   column {
-    name     = "ti_quantity"
+    name     = "TI_QUANTITY"
     type     = "NUMBER(38,0)"
     nullable = true
   }
 
   column {
-    name     = "pp_xoffset_min"
+    name     = "PP_XOFFSET_MIN"
     type     = "NUMBER(38,0)"
     nullable = true
   }
 
   column {
-    name     = "pp_xoffset_max"
+    name     = "PP_XOFFSET_MAX"
     type     = "NUMBER(38,0)"
     nullable = true
   }
 
   column {
-    name     = "pp_yoffset_min"
+    name     = "PP_YOFFSET_MIN"
     type     = "NUMBER(38,0)"
     nullable = true
   }
 
   column {
-    name     = "pp_yoffset_max"
+    name     = "PP_YOFFSET_MAX"
     type     = "NUMBER(38,0)"
     nullable = true
   }
 
   column {
-    name     = "useragent"
+    name     = "USERAGENT"
     type     = "VARCHAR(1000)"
     nullable = true
   }
 
   column {
-    name     = "br_name"
+    name     = "BR_NAME"
     type     = "VARCHAR(50)"
     nullable = true
   }
 
   column {
-    name     = "br_family"
+    name     = "BR_FAMILY"
     type     = "VARCHAR(50)"
     nullable = true
   }
 
   column {
-    name     = "br_version"
+    name     = "BR_VERSION"
     type     = "VARCHAR(50)"
     nullable = true
   }
 
   column {
-    name     = "br_type"
+    name     = "BR_TYPE"
     type     = "VARCHAR(50)"
     nullable = true
   }
 
   column {
-    name     = "br_renderengine"
+    name     = "BR_RENDERENGINE"
     type     = "VARCHAR(50)"
     nullable = true
   }
 
   column {
-    name     = "br_lang"
+    name     = "BR_LANG"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "br_features_pdf"
+    name     = "BR_FEATURES_PDF"
     type     = "BOOLEAN"
     nullable = true
   }
 
   column {
-    name     = "br_features_flash"
+    name     = "BR_FEATURES_FLASH"
     type     = "BOOLEAN"
     nullable = true
   }
 
   column {
-    name     = "br_features_java"
+    name     = "BR_FEATURES_JAVA"
     type     = "BOOLEAN"
     nullable = true
   }
 
   column {
-    name     = "br_features_director"
+    name     = "BR_FEATURES_DIRECTOR"
     type     = "BOOLEAN"
     nullable = true
   }
 
   column {
-    name     = "br_features_quicktime"
+    name     = "BR_FEATURES_QUICKTIME"
     type     = "BOOLEAN"
     nullable = true
   }
 
   column {
-    name     = "br_features_realplayer"
+    name     = "BR_FEATURES_REALPLAYER"
     type     = "BOOLEAN"
     nullable = true
   }
 
   column {
-    name     = "br_features_windowsmedia"
+    name     = "BR_FEATURES_WINDOWSMEDIA"
     type     = "BOOLEAN"
     nullable = true
   }
 
   column {
-    name     = "br_features_gears"
+    name     = "BR_FEATURES_GEARS"
     type     = "BOOLEAN"
     nullable = true
   }
 
   column {
-    name     = "br_features_silverlight"
+    name     = "BR_FEATURES_SILVERLIGHT"
     type     = "BOOLEAN"
     nullable = true
   }
 
   column {
-    name     = "br_cookies"
+    name     = "BR_COOKIES"
     type     = "BOOLEAN"
     nullable = true
   }
 
   column {
-    name     = "br_colordepth"
+    name     = "BR_COLORDEPTH"
     type     = "VARCHAR(12)"
     nullable = true
   }
 
   column {
-    name     = "br_viewwidth"
+    name     = "BR_VIEWWIDTH"
     type     = "NUMBER(38,0)"
     nullable = true
   }
 
   column {
-    name     = "br_viewheight"
+    name     = "BR_VIEWHEIGHT"
     type     = "NUMBER(38,0)"
     nullable = true
   }
 
   column {
-    name     = "os_name"
+    name     = "OS_NAME"
     type     = "VARCHAR(50)"
     nullable = true
   }
 
   column {
-    name     = "os_family"
+    name     = "OS_FAMILY"
     type     = "VARCHAR(50)"
     nullable = true
   }
 
   column {
-    name     = "os_manufacturer"
+    name     = "OS_MANUFACTURER"
     type     = "VARCHAR(50)"
     nullable = true
   }
 
   column {
-    name     = "os_timezone"
+    name     = "OS_TIMEZONE"
     type     = "VARCHAR(255)"
     nullable = true
   }
 
   column {
-    name     = "dvce_type"
+    name     = "DVCE_TYPE"
     type     = "VARCHAR(50)"
     nullable = true
   }
 
   column {
-    name     = "dvce_ismobile"
+    name     = "DVCE_ISMOBILE"
     type     = "BOOLEAN"
     nullable = true
   }
 
   column {
-    name     = "dvce_screenwidth"
+    name     = "DVCE_SCREENWIDTH"
     type     = "NUMBER(38,0)"
     nullable = true
   }
 
   column {
-    name     = "dvce_screenheight"
+    name     = "DVCE_SCREENHEIGHT"
     type     = "NUMBER(38,0)"
     nullable = true
   }
 
   column {
-    name     = "doc_charset"
+    name     = "DOC_CHARSET"
     type     = "VARCHAR(128)"
     nullable = true
   }
 
   column {
-    name     = "doc_width"
+    name     = "DOC_WIDTH"
     type     = "NUMBER(38,0)"
     nullable = true
   }
 
   column {
-    name     = "doc_height"
+    name     = "DOC_HEIGHT"
     type     = "NUMBER(38,0)"
     nullable = true
   }
 
   column {
-    name     = "tr_currency"
+    name     = "TR_CURRENCY"
     type     = "VARCHAR(3)"
     nullable = true
   }
 
   column {
-    name     = "tr_total_base"
+    name     = "TR_TOTAL_BASE"
     type     = "NUMBER(18,2)"
     nullable = true
   }
 
   column {
-    name     = "tr_tax_base"
+    name     = "TR_TAX_BASE"
     type     = "NUMBER(18,2)"
     nullable = true
   }
 
   column {
-    name     = "tr_shipping_base"
+    name     = "TR_SHIPPING_BASE"
     type     = "NUMBER(18,2)"
     nullable = true
   }
 
   column {
-    name     = "ti_currency"
+    name     = "TI_CURRENCY"
     type     = "VARCHAR(3)"
     nullable = true
   }
 
   column {
-    name     = "ti_price_base"
+    name     = "TI_PRICE_BASE"
     type     = "NUMBER(18,2)"
     nullable = true
   }
 
   column {
-    name     = "base_currency"
+    name     = "BASE_CURRENCY"
     type     = "VARCHAR(3)"
     nullable = true
   }
 
   column {
-    name     = "geo_timezone"
+    name     = "GEO_TIMEZONE"
     type     = "VARCHAR(64)"
     nullable = true
   }
 
   column {
-    name     = "mkt_clickid"
+    name     = "MKT_CLICKID"
     type     = "VARCHAR(128)"
     nullable = true
   }
 
   column {
-    name     = "mkt_network"
+    name     = "MKT_NETWORK"
     type     = "VARCHAR(64)"
     nullable = true
   }
 
   column {
-    name     = "etl_tags"
+    name     = "ETL_TAGS"
     type     = "VARCHAR(500)"
     nullable = true
   }
 
   column {
-    name     = "dvce_sent_tstamp"
+    name     = "DVCE_SENT_TSTAMP"
     type     = "TIMESTAMP_NTZ(9)"
     nullable = true
   }
 
   column {
-    name     = "refr_domain_userid"
+    name     = "REFR_DOMAIN_USERID"
     type     = "VARCHAR(128)"
     nullable = true
   }
 
   column {
-    name     = "refr_dvce_tstamp"
+    name     = "REFR_DVCE_TSTAMP"
     type     = "TIMESTAMP_NTZ(9)"
     nullable = true
   }
 
   column {
-    name     = "domain_sessionid"
+    name     = "DOMAIN_SESSIONID"
     type     = "VARCHAR(128)"
     nullable = true
   }
 
   column {
-    name     = "derived_tstamp"
+    name     = "DERIVED_TSTAMP"
     type     = "TIMESTAMP_NTZ(9)"
     nullable = true
   }
 
   column {
-    name     = "event_vendor"
+    name     = "EVENT_VENDOR"
     type     = "VARCHAR(1000)"
     nullable = true
   }
 
   column {
-    name     = "event_name"
+    name     = "EVENT_NAME"
     type     = "VARCHAR(1000)"
     nullable = true
   }
 
   column {
-    name     = "event_format"
+    name     = "EVENT_FORMAT"
     type     = "VARCHAR(128)"
     nullable = true
   }
 
   column {
-    name     = "event_version"
+    name     = "EVENT_VERSION"
     type     = "VARCHAR(128)"
     nullable = true
   }
 
   column {
-    name     = "event_fingerprint"
+    name     = "EVENT_FINGERPRINT"
     type     = "VARCHAR(128)"
     nullable = true
   }
 
   column {
-    name     = "true_tstamp"
+    name     = "TRUE_TSTAMP"
     type     = "TIMESTAMP_NTZ(9)"
     nullable = true
   }
 
+
   column {
-    name     = "load_tstamp"
+    name     = "LOAD_TSTAMP"
     type     = "TIMESTAMP_NTZ(9)"
     nullable = true
   }
 
   primary_key {
-    name = "event_id_pk"
-    keys = ["event_id"]
+    name = "EVENT_ID_PK"
+    keys = ["EVENT_ID"]
   }
 }

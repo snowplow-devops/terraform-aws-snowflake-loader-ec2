@@ -33,10 +33,20 @@ resource "snowflake_integration_grant" "loader" {
   with_grant_option = false
 }
 
-resource "snowflake_stage_grant" "loader" {
+resource "snowflake_stage_grant" "transformed" {
   database_name = snowflake_database.loader.name
   schema_name   = snowflake_schema.atomic.name
-  stage_name    = snowflake_stage.loader.name
+  stage_name    = snowflake_stage.transformed.name
+  privilege = "USAGE"
+  roles  = [snowflake_role.loader.name]
+  with_grant_option = false
+}
+
+resource "snowflake_stage_grant" "folder_monitoring" {
+  for_each      = toset(snowflake_stage.folder_monitoring[*].name)
+  database_name = snowflake_database.loader.name
+  schema_name   = snowflake_schema.atomic.name
+  stage_name    = each.value
   privilege = "USAGE"
   roles  = [snowflake_role.loader.name]
   with_grant_option = false

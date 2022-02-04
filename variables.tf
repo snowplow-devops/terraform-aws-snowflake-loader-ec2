@@ -14,8 +14,14 @@ variable "stage_bucket_name" {
   type        = string
 }
 
-variable "stage_prefix" {
-  description = "Path prefix of S3 location which will be used as stage by Snowflake"
+variable "transformed_stage_prefix" {
+  description = "Path prefix of S3 location which will be used as transformed stage by Snowflake"
+  type        = string
+}
+
+variable "folder_monitoring_stage_prefix" {
+  description = "Path prefix of S3 location which will be used as folder monitoring stage by Snowflake"
+  default     = ""
   type        = string
 }
 
@@ -56,12 +62,6 @@ variable "sf_atomic_schema_name" {
 variable "sf_file_format_name" {
   description = "Name of the Snowflake file format which is used by stage"
   default     = "SNOWPLOW_ENRICHED_JSON"
-  type        = string
-}
-
-variable "sf_stage_name" {
-  description = "Snowflake stage which is used to copy events from S3 bucket to Snowflake"
-  default     = "S3_STAGE"
   type        = string
 }
 

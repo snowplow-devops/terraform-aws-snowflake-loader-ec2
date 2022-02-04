@@ -49,12 +49,12 @@ module "snowflake_loader" {
   ssh_key_name     = aws_key_pair.sf_loader.key_name
   ssh_ip_allowlist = ["0.0.0.0/0"]
 
-  stage_bucket_name  = aws_s3_bucket.shredder_output.id
-  stage_prefix       = "prefix"
-  sf_db_name         = "SF_DB_NAME"
-  sf_wh_name         = "SF_WH_NAME"
-  sf_loader_password = "super_password"
-  sqs_queue_name     = aws_sqs_queue.message_queue.name
+  stage_bucket_name        = aws_s3_bucket.shredder_output.id
+  transformed_stage_prefix = "prefix"
+  sf_db_name               = "SF_DB_NAME"
+  sf_wh_name               = "SF_WH_NAME"
+  sf_loader_password       = "super_password"
+  sqs_queue_name           = aws_sqs_queue.message_queue.name
 }
 ```
 

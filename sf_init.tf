@@ -6,7 +6,7 @@ resource "snowflake_storage_integration" "integration" {
   name    = "${upper(var.name)}_SNOWFLAKE_STORAGE_INTEGRATION"
   type    = "EXTERNAL_STAGE"
   enabled = true
-  storage_allowed_locations = [local.s3_stage_full_path]
+  storage_allowed_locations = ["s3://${var.stage_bucket_name}/"]
   storage_provider         = "S3"
   storage_aws_role_arn     = local.snowflake_load_role_arn
 }
@@ -39,9 +39,19 @@ resource "snowflake_file_format" "enriched" {
   timestamp_format = "AUTO"
 }
 
-resource "snowflake_stage" "loader" {
-  name        = var.sf_stage_name
-  url         = local.s3_stage_full_path
+resource "snowflake_stage" "transformed" {
+  name        = "${upper(var.name)}_TRANSFORMED_STAGE"
+  url         = "s3://${var.stage_bucket_name}/${trimsuffix(var.transformed_stage_prefix, "/")}/"
+  database    = snowflake_database.loader.name
+  schema      = snowflake_schema.atomic.name
+  storage_integration = snowflake_storage_integration.integration.name
+  file_format = "FORMAT_NAME = ${local.sf_full_file_format_name}"
+}
+
+resource "snowflake_stage" "folder_monitoring" {
+  count       = local.folder_monitoring_enabled ? 1 : 0
+  name        = "${upper(var.name)}_FOLDER_MONITORING_STAGE"
+  url         = "s3://${var.stage_bucket_name}/${trimsuffix(var.folder_monitoring_stage_prefix, "/")}/"
   database    = snowflake_database.loader.name
   schema      = snowflake_schema.atomic.name
   storage_integration = snowflake_storage_integration.integration.name

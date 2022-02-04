@@ -3,21 +3,13 @@ data "aws_iam_policy_document" "snowflake_load_policy" {
     actions = [
       "s3:GetObject",
       "s3:GetObjectVersion",
-    ]
-    resources = ["arn:aws:s3:::${var.stage_bucket_name}/${trimsuffix(var.stage_prefix, "/")}/*"]
-  }
-
-  statement {
-    actions = [
       "s3:ListBucket",
       "s3:GetBucketLocation",
     ]
-    condition {
-      test     = "StringLike"
-      variable = "s3:prefix"
-      values = ["${trimsuffix(var.stage_prefix, "/")}/*"]
-    }
-    resources = ["arn:aws:s3:::${var.stage_bucket_name}"]
+    resources = [
+      "arn:aws:s3:::${var.stage_bucket_name}",
+      "arn:aws:s3:::${var.stage_bucket_name}/*"
+      ]
   }
 }
 

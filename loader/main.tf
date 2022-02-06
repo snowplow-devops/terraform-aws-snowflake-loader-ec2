@@ -210,6 +210,42 @@ locals {
   config = templatefile("${path.module}/templates/config.json.tmpl", {
     region  = data.aws_region.current.name
     message_queue = var.sqs_queue_name
+    sf_region = var.sf_region
+    sf_username = var.sf_username
+    sf_password = var.sf_password
+    sf_account = var.sf_account
+    sf_wh_name = var.sf_wh_name
+    sf_db_name = var.sf_db_name
+    sf_transformed_stage = var.sf_transformed_stage
+    folder_monitoring_enabled = var.folder_monitoring_enabled
+    sf_folder_monitoring_stage = var.sf_folder_monitoring_stage
+    sf_schema = var.sf_schema
+    sf_max_error_given = var.sf_max_error != -1
+    sf_max_error = var.sf_max_error
+    sp_tracking_enabled = var.sp_tracking_enabled
+    sp_tracking_app_id = var.sp_tracking_app_id
+    sp_tracking_collector_url = var.sp_tracking_collector_url
+    sentry_enabled = var.sentry_enabled
+    sentry_dsn = var.sentry_dsn
+    statsd_enabled = var.statsd_enabled
+    statsd_host = var.statsd_host
+    statsd_port = var.statsd_port
+    stdout_metrics_enabled = var.stdout_metrics_enabled
+    webhook_enabled = var.webhook_enabled
+    webhook_collector = var.webhook_collector
+    folder_monitoring_staging = var.folder_monitoring_staging
+    folder_monitoring_period = var.folder_monitoring_period
+    folder_monitoring_since = var.folder_monitoring_since
+    folder_monitoring_until = var.folder_monitoring_until
+    shredder_output = var.shredder_output
+    health_check_enabled = var.health_check_enabled
+    health_check_freq = var.health_check_freq
+    health_check_timeout = var.health_check_timeout
+    retry_queue_enabled = var.retry_queue_enabled
+    retry_period = var.retry_period
+    retry_queue_size = var.retry_queue_size
+    retry_queue_max_attempt = var.retry_queue_max_attempt
+    retry_queue_interval = var.retry_queue_interval
   })
 
   user_data = templatefile("${path.module}/templates/user-data.sh.tmpl", {

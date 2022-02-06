@@ -49,7 +49,7 @@ resource "snowflake_stage" "transformed" {
 }
 
 resource "snowflake_stage" "folder_monitoring" {
-  count       = local.folder_monitoring_enabled ? 1 : 0
+  count       = var.folder_monitoring_enabled ? 1 : 0
   name        = "${upper(var.name)}_FOLDER_MONITORING_STAGE"
   url         = "s3://${var.stage_bucket_name}/${trimsuffix(var.folder_monitoring_stage_prefix, "/")}/"
   database    = snowflake_database.loader.name

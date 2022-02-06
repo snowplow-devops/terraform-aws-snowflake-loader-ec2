@@ -46,7 +46,7 @@ sudo docker run \
 %{ endif ~}
   -v $${CONFIG_DIR}:/snowplow/config \
   -e 'JAVA_OPTS=-Dorg.slf4j.simpleLogger.defaultLogLevel=info' \
-  snowplow/snowplow-rdb-loader:${version} \
+  snowplow/rdb-loader-snowflake:${version} \
   --config $(base64 -w 0 $CONFIG_DIR/loader.json) \
   --iglu-config $(base64 -w 0 $CONFIG_DIR/iglu_resolver.json)
 

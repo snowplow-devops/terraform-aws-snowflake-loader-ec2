@@ -10,19 +10,99 @@
 
   # Warehouse connection details
   "storage" : {
-    # Redshift hostname
-    "host": "db_host",
-    # Database name
-    "database": "db_name",
-    # Database port. Optional, default value 5439
-    "port": 5439,
-    # AWS Role ARN allowing Redshift to load data from S3
-    "roleArn": "db_role",
-    # DB schema name
-    "schema": "db_schema",
-    # DB user with permissions to load data
-    "username": "db_username",
-    # DB password
-    "password": "db_pass"
+    "snowflakeRegion": "${sf_region}",
+    "username": "${sf_username}",
+    "password": "${sf_password}",
+    "account": "${sf_account}",
+    "warehouse": "${sf_wh_name}",
+    "database": "${sf_db_name}",
+    "transformedStage": "${sf_transformed_stage}",
+%{ if folder_monitoring_enabled ~}
+    "folderMonitoringStage": "${sf_folder_monitoring_stage}"
+%{ endif ~}
+    "schema": "${sf_schema}",
+%{ if sf_max_error_given ~}
+    "maxError": ${sf_max_error}
+%{ endif ~}
+  },
+
+  # Observability and reporting options
+  "monitoring": {
+%{ if sp_tracking_enabled ~}
+    # Snowplow tracking (optional)
+    "snowplow": {
+      "appId": "${sp_tracking_app_id}",
+      "collector": "${sp_tracking_collector_url}"
+    },
+%{ endif ~}
+
+%{ if sentry_enabled ~}
+    # Optional, for tracking runtime exceptions
+    "sentry": {
+      "dsn": "${sentry_dsn}"
+    },
+%{ endif ~}
+
+    # Optional, configure how metrics are reported
+    "metrics": {
+%{ if statsd_enabled ~}
+      # Optional, send metrics to StatsD server
+      "statsd": {
+        "hostname": "${statsd_host}",
+        "port": ${statsd_port},
+      },
+%{ endif ~}
+
+      # Optional, print metrics on stdout (with slf4j)
+%{ if stdout_metrics_enabled ~}
+      "stdout": {}
+%{ endif ~}
+    },
+%{ if webhook_enabled ~}
+    "webhook": {
+      "endpoint": "${webhook_collector}"
+    },
+%{ endif ~}
+%{ if folder_monitoring_enabled ~}
+    # Optional, configuration for periodic unloaded/corrupted folders checks
+    "folders": {
+      # Path where Loader could store auxiliary logs
+      # Loader should be able to write here, Redshift should be able to load from here
+      "staging": "${folder_monitoring_staging}",
+      # How often to check
+      "period": "${folder_monitoring_period}",
+      "since": "${folder_monitoring_since}",
+      "until": "${folder_monitoring_until}",
+      # Path to shredded archive
+      "shredderOutput": "${shredder_output}"
+    }
+%{ endif ~}
+
+%{ if health_check_enabled ~}
+    # Periodic DB health-check, raising a warning if DB hasn't responded to `SELECT 1`
+    "healthCheck": {
+      # How often query a DB
+      "frequency": "${health_check_freq}",
+      # How long to wait for a response
+      "timeout": "${health_check_timeout}"
+    }
+%{ endif ~}
+  },
+
+%{ if retry_queue_enabled ~}
+  # Additional backlog of recently failed folders that could be automatically retried
+  # Retry Queue saves a failed folder and then re-reads the info from shredding_complete S3 file
+  "retryQueue": {
+    # How often batch of failed folders should be pulled into a discovery queue
+    "period": "${retry_period}",
+    # How many failures should be kept in memory
+    # After the limit is reached new failures are dropped
+    "size": ${retry_queue_size},
+    # How many attempt to make for each folder
+    # After the limit is reached new failures are dropped
+    "maxAttempts": ${retry_queue_max_attempt},
+    # Artificial pause after each failed folder being added to the queue
+    "interval": "${retry_queue_interval}"
   }
+%{ endif ~}
 }

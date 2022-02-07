@@ -3,6 +3,9 @@ resource "snowflake_table" "events" {
   schema   = snowflake_schema.atomic.name
   name     = "EVENTS"
 
+  lifecycle {
+    ignore_changes = [column]
+  }
 
   column {
     name     = "APP_ID"

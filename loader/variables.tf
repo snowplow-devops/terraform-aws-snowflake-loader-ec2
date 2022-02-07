@@ -84,6 +84,7 @@ variable "sf_username" {
 variable "sf_password" {
   description = "Password of Snowflake user"
   type        = string
+  sensitive   = true
 }
 
 variable "sf_account" {

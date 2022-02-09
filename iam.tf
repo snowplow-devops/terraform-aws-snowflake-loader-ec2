@@ -9,7 +9,7 @@ data "aws_iam_policy_document" "snowflake_load_policy" {
     resources = [
       "arn:aws:s3:::${var.stage_bucket_name}",
       "arn:aws:s3:::${var.stage_bucket_name}/*"
-      ]
+    ]
   }
 }
 

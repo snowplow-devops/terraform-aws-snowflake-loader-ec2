@@ -4,7 +4,7 @@ variable "name" {
 }
 
 variable "app_version" {
-  type  = string
+  type = string
 }
 
 variable "vpc_id" {
@@ -317,9 +317,9 @@ variable "custom_iglu_resolvers" {
 
 variable "iam_permissions_boundary" {
   default = ""
-  type  = string
+  type    = string
 }
 
 variable "telemetry_script" {
-  type  = string
+  type = string
 }

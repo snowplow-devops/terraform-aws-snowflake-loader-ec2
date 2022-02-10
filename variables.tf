@@ -229,33 +229,21 @@ variable "webhook_collector" {
   type        = string
 }
 
-variable "folder_monitoring_staging" {
-  description = "Path where Loader could store auxiliary logs for folder monitoring"
-  default     = ""
-  type        = string
-}
-
 variable "folder_monitoring_period" {
   description = "How often to folder should be checked by folder monitoring"
-  default     = ""
+  default     = "8 hours"
   type        = string
 }
 
 variable "folder_monitoring_since" {
   description = "Specifies since when folder monitoring will check"
-  default     = ""
+  default     = "14 days"
   type        = string
 }
 
 variable "folder_monitoring_until" {
   description = "Specifies until when folder monitoring will check"
-  default     = ""
-  type        = string
-}
-
-variable "shredder_output" {
-  description = "Path to shredded archive"
-  default     = ""
+  default     = "6 hours"
   type        = string
 }
 

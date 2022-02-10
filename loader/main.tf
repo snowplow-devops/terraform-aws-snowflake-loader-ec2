@@ -67,6 +67,19 @@ resource "aws_iam_policy" "iam_policy" {
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = concat(
+      var.folder_monitoring_enabled ? [
+        {
+          Effect = "Allow",
+          Action = [
+            "s3:ListBucket",
+            "s3:PutObject"
+          ],
+          Resource = [
+            "arn:aws:s3:::${var.stage_bucket_name}",
+            "arn:aws:s3:::${var.stage_bucket_name}/*"
+          ]
+        }
+      ] : [],
       [
         {
           Effect = "Allow",
@@ -261,7 +274,7 @@ locals {
 }
 
 resource "aws_launch_configuration" "lc" {
-  name_prefix = "${var.name}-"
+  name_prefix = "${var.name}-snowflake-loader"
 
   image_id             = var.amazon_linux_2_ami_id == "" ? data.aws_ami.amazon_linux_2.id : var.amazon_linux_2_ami_id
   instance_type        = var.instance_type

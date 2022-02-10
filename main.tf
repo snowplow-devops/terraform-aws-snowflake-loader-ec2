@@ -46,6 +46,7 @@ module "loader" {
   cloudwatch_logs_retention_days = var.cloudwatch_logs_retention_days
   telemetry_script               = join("", module.telemetry.*.amazon_linux_2_user_data)
 
+  stage_bucket_name          = var.stage_bucket_name
   sqs_queue_name             = var.sqs_queue_name
   sf_region                  = var.sf_region
   sf_username                = snowflake_user.loader.name
@@ -69,11 +70,11 @@ module "loader" {
   stdout_metrics_enabled     = var.stdout_metrics_enabled
   webhook_enabled            = var.webhook_enabled
   webhook_collector          = var.webhook_collector
-  folder_monitoring_staging  = var.folder_monitoring_staging
+  folder_monitoring_staging  = join("", snowflake_stage.folder_monitoring[*].url)
   folder_monitoring_period   = var.folder_monitoring_period
   folder_monitoring_since    = var.folder_monitoring_since
   folder_monitoring_until    = var.folder_monitoring_until
-  shredder_output            = var.shredder_output
+  shredder_output            = join("", snowflake_stage.transformed[*].url)
   health_check_enabled       = var.health_check_enabled
   health_check_freq          = var.health_check_freq
   health_check_timeout       = var.health_check_timeout

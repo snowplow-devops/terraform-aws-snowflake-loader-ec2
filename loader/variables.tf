@@ -64,6 +64,11 @@ variable "cloudwatch_logs_retention_days" {
   type        = number
 }
 
+variable "stage_bucket_name" {
+  description = "Name of the S3 bucket which will be used as stage by Snowflake Loader"
+  type        = string
+}
+
 # --- Configuration options
 
 variable "sqs_queue_name" {

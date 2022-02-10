@@ -3,12 +3,6 @@ variable "name" {
   type        = string
 }
 
-variable "loader_enabled" {
-  description = "Specifies whether to deploy loader or not"
-  type        = bool
-  default     = true
-}
-
 variable "stage_bucket_name" {
   description = "Name of the S3 bucket which will be used as stage by Snowflake"
   type        = string

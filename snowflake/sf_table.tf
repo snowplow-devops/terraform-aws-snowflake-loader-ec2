@@ -5,6 +5,7 @@ resource "snowflake_table" "events" {
 
   lifecycle {
     ignore_changes = [column]
+    prevent_destroy = true
   }
 
   column {

@@ -19,73 +19,349 @@ locals {
   )
 
   account_id               = data.aws_caller_identity.current.account_id
-  snowflake_load_role_name = "${var.name}-snowflakedb-load"
-  snowflake_load_role_arn  = "arn:aws:iam::${local.account_id}:role/${local.snowflake_load_role_name}"
+  snowflake_iam_load_role_name = "${var.name}-snowflakedb-load"
+  snowflake_load_role_arn  = "arn:aws:iam::${local.account_id}:role/${local.snowflake_iam_load_role_name}"
+  cloudwatch_log_group_name = "/aws/ec2/${var.name}-snowflake-loader"
 }
 
 data "aws_region" "current" {}
 
 data "aws_caller_identity" "current" {}
 
-module "loader" {
-  source = "./loader"
+data "aws_ami" "amazon_linux_2" {
+  most_recent = true
 
-  count = var.loader_enabled ? 1 : 0
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-*-x86_64-ebs"]
+  }
 
-  name                           = var.name
-  app_version                    = local.app_version
-  vpc_id                         = var.vpc_id
-  subnet_ids                     = var.subnet_ids
-  instance_type                  = var.instance_type
-  associate_public_ip_address    = var.associate_public_ip_address
-  ssh_key_name                   = var.ssh_key_name
-  ssh_ip_allowlist               = var.ssh_ip_allowlist
-  amazon_linux_2_ami_id          = var.amazon_linux_2_ami_id
-  tags                           = local.tags
-  cloudwatch_logs_enabled        = var.cloudwatch_logs_enabled
-  cloudwatch_logs_retention_days = var.cloudwatch_logs_retention_days
-  telemetry_script               = join("", module.telemetry.*.amazon_linux_2_user_data)
+  filter {
+    name   = "root-device-type"
+    values = ["ebs"]
+  }
 
-  stage_bucket_name          = var.stage_bucket_name
-  sqs_queue_name             = var.sqs_queue_name
-  sf_region                  = var.sf_region
-  sf_username                = snowflake_user.loader.name
-  sf_password                = var.sf_loader_password
-  sf_account                 = var.sf_account
-  sf_wh_name                 = snowflake_warehouse.loader.name
-  sf_db_name                 = snowflake_database.loader.name
-  sf_transformed_stage       = snowflake_stage.transformed.name
-  folder_monitoring_enabled  = var.folder_monitoring_enabled
-  sf_folder_monitoring_stage = join("", snowflake_stage.folder_monitoring[*].name)
-  sf_schema                  = snowflake_schema.atomic.name
-  sf_max_error               = var.sf_max_error
-  sp_tracking_enabled        = var.sp_tracking_enabled
-  sp_tracking_app_id         = var.sp_tracking_app_id
-  sp_tracking_collector_url  = var.sp_tracking_collector_url
-  sentry_enabled             = var.sentry_enabled
-  sentry_dsn                 = var.sentry_dsn
-  statsd_enabled             = var.statsd_enabled
-  statsd_host                = var.statsd_host
-  statsd_port                = var.statsd_port
-  stdout_metrics_enabled     = var.stdout_metrics_enabled
-  webhook_enabled            = var.webhook_enabled
-  webhook_collector          = var.webhook_collector
-  folder_monitoring_staging  = join("", snowflake_stage.folder_monitoring[*].url)
-  folder_monitoring_period   = var.folder_monitoring_period
-  folder_monitoring_since    = var.folder_monitoring_since
-  folder_monitoring_until    = var.folder_monitoring_until
-  shredder_output            = join("", snowflake_stage.transformed[*].url)
-  health_check_enabled       = var.health_check_enabled
-  health_check_freq          = var.health_check_freq
-  health_check_timeout       = var.health_check_timeout
-  retry_queue_enabled        = var.retry_queue_enabled
-  retry_period               = var.retry_period
-  retry_queue_size           = var.retry_queue_size
-  retry_queue_max_attempt    = var.retry_queue_max_attempt
-  retry_queue_interval       = var.retry_queue_interval
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
 
-  default_iglu_resolvers   = var.default_iglu_resolvers
-  custom_iglu_resolvers    = var.custom_iglu_resolvers
+  owners = ["amazon"]
+}
+
+# --- CloudWatch: Logging
+
+resource "aws_cloudwatch_log_group" "log_group" {
+  count = var.cloudwatch_logs_enabled ? 1 : 0
+
+  name              = local.cloudwatch_log_group_name
+  retention_in_days = var.cloudwatch_logs_retention_days
+
+  tags = local.tags
+}
+
+# --- IAM: Roles & Permissions
+
+resource "aws_iam_role" "iam_role" {
+  name        = "${var.name}-snowflake-loader"
+  description = "Allows the Loader nodes to access required services"
+  tags        = local.tags
+
+  assume_role_policy = <<EOF
+{
+  "Version" : "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": { "Service": [ "ec2.amazonaws.com" ]},
+      "Action": [ "sts:AssumeRole" ]
+    }
+  ]
+}
+EOF
+
+  permissions_boundary = var.iam_permissions_boundary
+}
+
+resource "aws_iam_policy" "iam_policy" {
+  name = "${var.name}-snowflake-loader"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = concat(
+      var.folder_monitoring_enabled ? [
+        {
+          Effect = "Allow",
+          Action = [
+            "s3:ListBucket",
+            "s3:PutObject"
+          ],
+          Resource = [
+            "arn:aws:s3:::${var.stage_bucket_name}",
+            "arn:aws:s3:::${var.stage_bucket_name}/*"
+          ]
+        }
+      ] : [],
+      [
+        {
+          Effect = "Allow",
+          Action = [
+            "sqs:DeleteMessage",
+            "sqs:GetQueueUrl",
+            "sqs:ListQueues",
+            "sqs:ChangeMessageVisibility",
+            "sqs:SendMessageBatch",
+            "sqs:ReceiveMessage",
+            "sqs:SendMessage",
+            "sqs:DeleteMessageBatch",
+            "sqs:ChangeMessageVisibilityBatch"
+          ],
+          Resource = [
+            "arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.sqs_queue_name}"
+          ]
+        },
+        {
+          Effect = "Allow",
+          Action = [
+            "logs:PutLogEvents",
+            "logs:CreateLogStream",
+            "logs:DescribeLogStreams"
+          ],
+          Resource = [
+            "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${local.cloudwatch_log_group_name}:*"
+          ]
+        },
+        {
+          Effect = "Allow",
+          Action = [
+            "cloudwatch:ListMetrics",
+            "cloudwatch:PutMetricData"
+          ],
+          Resource = "*"
+        }
+      ]
+    )
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "policy_attachment" {
+  role       = aws_iam_role.iam_role.name
+  policy_arn = aws_iam_policy.iam_policy.arn
+}
+
+resource "aws_iam_instance_profile" "instance_profile" {
+  name = "${var.name}-snowflake-loader"
+  role = aws_iam_role.iam_role.name
+}
+
+# --- EC2: Security Group Rules
+
+resource "aws_security_group" "sg" {
+  name   = "${var.name}-snowflake-loader"
+  vpc_id = var.vpc_id
+  tags   = local.tags
+}
+
+resource "aws_security_group_rule" "ingress_tcp_22" {
+  type              = "ingress"
+  from_port         = 22
+  to_port           = 22
+  protocol          = "tcp"
+  cidr_blocks       = var.ssh_ip_allowlist
+  security_group_id = aws_security_group.sg.id
+}
+
+resource "aws_security_group_rule" "egress_tcp_80" {
+  type              = "egress"
+  from_port         = 80
+  to_port           = 80
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.sg.id
+}
+
+resource "aws_security_group_rule" "egress_tcp_443" {
+  type              = "egress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.sg.id
+}
+
+# Needed for clock synchronization
+resource "aws_security_group_rule" "egress_udp_123" {
+  type              = "egress"
+  from_port         = 123
+  to_port           = 123
+  protocol          = "udp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.sg.id
+}
+
+# --- EC2: Auto-scaling group & Launch Configurations
+
+locals {
+  resolvers_raw = concat(var.default_iglu_resolvers, var.custom_iglu_resolvers)
+
+  resolvers_open = [
+    for resolver in local.resolvers_raw : merge(
+      {
+        name           = resolver["name"],
+        priority       = resolver["priority"],
+        vendorPrefixes = resolver["vendor_prefixes"],
+        connection = {
+          http = {
+            uri = resolver["uri"]
+          }
+        }
+      }
+    ) if resolver["api_key"] == ""
+  ]
+
+  resolvers_closed = [
+    for resolver in local.resolvers_raw : merge(
+      {
+        name           = resolver["name"],
+        priority       = resolver["priority"],
+        vendorPrefixes = resolver["vendor_prefixes"],
+        connection = {
+          http = {
+            uri    = resolver["uri"]
+            apikey = resolver["api_key"]
+          }
+        }
+      }
+    ) if resolver["api_key"] != ""
+  ]
+
+  resolvers = flatten([
+    local.resolvers_open,
+    local.resolvers_closed
+  ])
+
+  iglu_resolver = templatefile("${path.module}/templates/iglu_resolver.json.tmpl", { resolvers = jsonencode(local.resolvers) })
+
+  config = templatefile("${path.module}/templates/config.json.tmpl", {
+    region                     = data.aws_region.current.name
+    message_queue              = var.sqs_queue_name
+    sf_region                  = var.sf_region
+    sf_username                = module.snowflake_resources.sf_loader_username
+    sf_password                = var.sf_loader_password
+    sf_account                 = var.sf_account
+    sf_wh_name                 = var.sf_wh_name
+    sf_db_name                 = var.sf_db_name
+    sf_transformed_stage       = module.snowflake_resources.sf_transformed_stage
+    folder_monitoring_enabled  = var.folder_monitoring_enabled
+    sf_folder_monitoring_stage = module.snowflake_resources.sf_folder_monitoring_stage
+    sf_schema                  = var.sf_atomic_schema_name
+    sf_max_error_given         = var.sf_max_error != -1
+    sf_max_error               = var.sf_max_error
+    sp_tracking_enabled        = var.sp_tracking_enabled
+    sp_tracking_app_id         = var.sp_tracking_app_id
+    sp_tracking_collector_url  = var.sp_tracking_collector_url
+    sentry_enabled             = var.sentry_enabled
+    sentry_dsn                 = var.sentry_dsn
+    statsd_enabled             = var.statsd_enabled
+    statsd_host                = var.statsd_host
+    statsd_port                = var.statsd_port
+    stdout_metrics_enabled     = var.stdout_metrics_enabled
+    webhook_enabled            = var.webhook_enabled
+    webhook_collector          = var.webhook_collector
+    folder_monitoring_staging  = module.snowflake_resources.folder_monitoring_stage_path
+    folder_monitoring_period   = var.folder_monitoring_period
+    folder_monitoring_since    = var.folder_monitoring_since
+    folder_monitoring_until    = var.folder_monitoring_until
+    shredder_output            = module.snowflake_resources.transformed_stage_path
+    health_check_enabled       = var.health_check_enabled
+    health_check_freq          = var.health_check_freq
+    health_check_timeout       = var.health_check_timeout
+    retry_queue_enabled        = var.retry_queue_enabled
+    retry_period               = var.retry_period
+    retry_queue_size           = var.retry_queue_size
+    retry_queue_max_attempt    = var.retry_queue_max_attempt
+    retry_queue_interval       = var.retry_queue_interval
+  })
+
+  user_data = templatefile("${path.module}/templates/user-data.sh.tmpl", {
+    config        = local.config
+    iglu_resolver = local.iglu_resolver
+    version       = local.app_version
+
+    telemetry_script = join("", module.telemetry.*.amazon_linux_2_user_data)
+
+    cloudwatch_logs_enabled   = var.cloudwatch_logs_enabled
+    cloudwatch_log_group_name = local.cloudwatch_log_group_name
+  })
+}
+
+resource "aws_launch_configuration" "lc" {
+  name_prefix = "${var.name}-snowflake-loader"
+
+  image_id             = var.amazon_linux_2_ami_id == "" ? data.aws_ami.amazon_linux_2.id : var.amazon_linux_2_ami_id
+  instance_type        = var.instance_type
+  key_name             = var.ssh_key_name
+  iam_instance_profile = aws_iam_instance_profile.instance_profile.name
+  security_groups      = [aws_security_group.sg.id]
+  user_data            = local.user_data
+
+  # Note: Required if deployed in a public subnet
+  associate_public_ip_address = var.associate_public_ip_address
+
+  root_block_device {
+    volume_type           = "gp2"
+    volume_size           = "10"
+    delete_on_termination = true
+    encrypted             = true
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+module "tags" {
+  source  = "snowplow-devops/tags/aws"
+  version = "0.1.2"
+
+  tags = local.tags
+}
+
+resource "aws_autoscaling_group" "asg" {
+  name = "${var.name}-snowflake-loader"
+
+  max_size = 1
+  min_size = 1
+
+  launch_configuration = aws_launch_configuration.lc.name
+
+  health_check_grace_period = 300
+  health_check_type         = "EC2"
+
+  vpc_zone_identifier = var.subnet_ids
+
+  instance_refresh {
+    strategy = "Rolling"
+    preferences {
+      min_healthy_percentage = 90
+    }
+    triggers = ["tag"]
+  }
+
+  tags = module.tags.asg_tags
+}
+
+module "snowflake_resources" {
+  source = "./snowflake"
+
+  prefix = var.name
+  stage_bucket_name = var.stage_bucket_name
+  snowflake_iam_load_role_name = local.snowflake_iam_load_role_name
+  transformed_stage_prefix = var.transformed_stage_prefix
+  folder_monitoring_stage_prefix = var.folder_monitoring_stage_prefix
+  sf_db_name = var.sf_db_name
+  sf_wh_name = var.sf_wh_name
+  sf_loader_password = var.sf_loader_password
   iam_permissions_boundary = var.iam_permissions_boundary
 }
 

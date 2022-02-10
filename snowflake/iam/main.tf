@@ -19,26 +19,26 @@ data "aws_iam_policy_document" "snowflake_load_assume_role_policy_storage_integr
 
     principals {
       type        = "AWS"
-      identifiers = [snowflake_storage_integration.integration.storage_aws_iam_user_arn]
+      identifiers = [var.storage_aws_iam_user_arn]
     }
 
     condition {
       test     = "StringEquals"
       variable = "sts:ExternalId"
 
-      values = [snowflake_storage_integration.integration.storage_aws_external_id]
+      values = [var.storage_aws_external_id]
     }
   }
 }
 
 resource "aws_iam_policy" "snowflakedb_load_policy" {
-  name        = local.snowflake_load_role_name
+  name        = var.snowflake_iam_load_role_name
   description = "Access policy for the SnowflakeLoadRole"
   policy      = data.aws_iam_policy_document.snowflake_load_policy.json
 }
 
 resource "aws_iam_role" "snowflakedb_load_role" {
-  name                 = local.snowflake_load_role_name
+  name                 = var.snowflake_iam_load_role_name
   description          = "Role for the Snowplow Snowflake Loader to assume"
   max_session_duration = 43200
   assume_role_policy   = data.aws_iam_policy_document.snowflake_load_assume_role_policy_storage_integration.json

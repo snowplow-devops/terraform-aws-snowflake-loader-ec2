@@ -18,10 +18,10 @@ locals {
     local.local_tags
   )
 
-  account_id               = data.aws_caller_identity.current.account_id
+  account_id                   = data.aws_caller_identity.current.account_id
   snowflake_iam_load_role_name = "${var.name}-snowflakedb-load"
-  snowflake_load_role_arn  = "arn:aws:iam::${local.account_id}:role/${local.snowflake_iam_load_role_name}"
-  cloudwatch_log_group_name = "/aws/ec2/${var.name}-snowflake-loader"
+  snowflake_load_role_arn      = "arn:aws:iam::${local.account_id}:role/${local.snowflake_iam_load_role_name}"
+  cloudwatch_log_group_name    = "/aws/ec2/${var.name}-snowflake-loader"
 }
 
 data "aws_region" "current" {}
@@ -354,15 +354,15 @@ resource "aws_autoscaling_group" "asg" {
 module "snowflake_resources" {
   source = "./snowflake"
 
-  prefix = var.name
-  stage_bucket_name = var.stage_bucket_name
-  snowflake_iam_load_role_name = local.snowflake_iam_load_role_name
-  transformed_stage_prefix = var.transformed_stage_prefix
+  prefix                         = var.name
+  stage_bucket_name              = var.stage_bucket_name
+  snowflake_iam_load_role_name   = local.snowflake_iam_load_role_name
+  transformed_stage_prefix       = var.transformed_stage_prefix
   folder_monitoring_stage_prefix = var.folder_monitoring_stage_prefix
-  sf_db_name = var.sf_db_name
-  sf_wh_name = var.sf_wh_name
-  sf_loader_password = var.sf_loader_password
-  iam_permissions_boundary = var.iam_permissions_boundary
+  sf_db_name                     = var.sf_db_name
+  sf_wh_name                     = var.sf_wh_name
+  sf_loader_password             = var.sf_loader_password
+  iam_permissions_boundary       = var.iam_permissions_boundary
 }
 
 module "telemetry" {

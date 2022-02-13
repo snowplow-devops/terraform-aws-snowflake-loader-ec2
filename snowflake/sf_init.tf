@@ -1,5 +1,5 @@
 locals {
-  sf_full_file_format_name = "${snowflake_file_format.enriched.database}.${snowflake_file_format.enriched.schema}.${snowflake_file_format.enriched.name}"
+  sf_full_file_format_name  = "${snowflake_file_format.enriched.database}.${snowflake_file_format.enriched.schema}.${snowflake_file_format.enriched.name}"
   folder_monitoring_enabled = var.folder_monitoring_stage_prefix != ""
 }
 

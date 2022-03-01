@@ -98,7 +98,7 @@ resource "snowflake_table_grant" "loader" {
 
 resource "snowflake_user" "loader" {
   name                 = "${upper(local.prefix)}_LOADER_USER"
-  password             = var.sf_loader_password
+  password             = var.snowflake_loader_password
   default_role         = snowflake_role.loader.name
   must_change_password = false
 }

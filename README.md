@@ -66,8 +66,6 @@ module "snowflake_loader" {
 
   stage_bucket_name        = aws_s3_bucket.shredder_output.id
   transformed_stage_prefix = "prefix"
-  sf_db_name               = "SF_DB_NAME"
-  sf_wh_name               = "SF_WH_NAME"
   sf_loader_password       = "super_password"
   sqs_queue_name           = aws_sqs_queue.message_queue.name
 }
@@ -141,8 +139,6 @@ module "snowflake_loader" {
 | <a name="input_stage_bucket_name"></a> [stage\_bucket\_name](#input\_stage\_bucket\_name) | The name of the S3 bucket which will be used as stage by Snowflake | `string` | n/a | yes |
 | <a name="input_transformed_stage_prefix"></a> [transformed\_stage\_prefix](#input\_transformed\_stage\_prefix) | Path prefix of S3 location which will be used as transformed stage by Snowflake | `string` | n/a | yes |
 | <a name="input_folder_monitoring_stage_prefix"></a> [folder\_monitoring\_stage\_prefix](#input\_folder\_monitoring\_stage\_prefix) | Path prefix of S3 location which will be used as folder monitoring stage by Snowflake | `string` | n/a | yes |
-| <a name="input_sf_db_name"></a> [sf\_db\_name](#input\_sf\_db\_name) | The name of the database to connect to | `string` | n/a | yes |
-| <a name="input_sf_wh_name"></a> [sf\_wh\_name](#input\_sf\_wh\_name) | The name of the Snowflake warehouse to connect to | `string` | n/a | yes |
 | <a name="input_sf_region"></a> [sf\_region](#input\_sf\_region) | Snowflake account region | `string` | n/a | yes |
 | <a name="input_sf_account"></a> [sf\_account](#input\_sf\_account) | Snowflake account name | `string` | n/a | yes |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | The VPC to deploy Stream Shredder within | `string` | n/a | yes |

@@ -13,17 +13,27 @@ output "sg_id" {
   description = "ID of the security group attached to the Snowflake Loader servers"
 }
 
-output "sf_username" {
-  value       = module.snowflake_resources.sf_loader_username
+output "snowflake_username" {
+  value       = module.snowflake_resources.snowflake_username
   description = "Snowflake username which is used by loader to perform loading"
 }
 
-output "sf_transformed_stage" {
-  value       = module.snowflake_resources.sf_transformed_stage
-  description = "Snowflake stage to load transformed events"
+output "snowflake_password" {
+  value       = module.snowflake_resources.snowflake_password
+  description = "Snowflake password which is used by loader to perform loading"
 }
 
-output "sf_folder_monitoring_stage" {
-  value       = module.snowflake_resources.sf_folder_monitoring_stage
-  description = "Snowflake stage for folder monitoring"
+output "snowflake_wh" {
+  description = "Snowflake warehouse name"
+  value       = module.snowflake_resources.snowflake_warehouse
+}
+
+output "snowflake_db" {
+  description = "Snowflake db name"
+  value       = module.snowflake_resources.snowflake_database
+}
+
+output "schema_name" {
+  description = "Schema name"
+  value       = module.snowflake_resources.snowflake_schema
 }

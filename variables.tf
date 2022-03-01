@@ -8,27 +8,6 @@ variable "stage_bucket_name" {
   type        = string
 }
 
-variable "transformed_stage_prefix" {
-  description = "Path prefix of S3 location which will be used as transformed stage by Snowflake"
-  type        = string
-}
-
-variable "folder_monitoring_stage_prefix" {
-  description = "Path prefix of S3 location which will be used as folder monitoring stage by Snowflake"
-  default     = ""
-  type        = string
-}
-
-variable "sf_db_name" {
-  description = "The name of the database to connect to"
-  type        = string
-}
-
-variable "sf_wh_name" {
-  description = "The name of the Snowflake warehouse to connect to"
-  type        = string
-}
-
 variable "sf_wh_size" {
   description = "Size of the Snowflake warehouse to connect to"
   default     = "XSMALL"
@@ -47,19 +26,13 @@ variable "sf_wh_auto_resume" {
   type        = bool
 }
 
-variable "sf_atomic_schema_name" {
-  description = "Name of the atomic schema created in Snowflake"
-  default     = "ATOMIC"
-  type        = string
-}
-
 variable "sf_file_format_name" {
   description = "Name of the Snowflake file format which is used by stage"
   default     = "SNOWPLOW_ENRICHED_JSON"
   type        = string
 }
 
-variable "sf_loader_password" {
+variable "snowflake_loader_password" {
   description = "The password to use to connect to the database"
   type        = string
   sensitive   = true

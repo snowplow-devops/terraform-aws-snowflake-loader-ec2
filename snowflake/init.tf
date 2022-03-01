@@ -1,6 +1,13 @@
 locals {
-  sf_full_file_format_name  = "${snowflake_file_format.enriched.database}.${snowflake_file_format.enriched.schema}.${snowflake_file_format.enriched.name}"
-  folder_monitoring_enabled = var.folder_monitoring_stage_prefix != ""
+  snowflake_full_file_format_name = "${snowflake_file_format.enriched.database}.${snowflake_file_format.enriched.schema}.${snowflake_file_format.enriched.name}"
+  wh_name                         = "${upper(local.prefix)}_WAREHOUSE"
+  db_name                         = "${upper(local.prefix)}_DATABASE"
+  transformed_stage_name          = "${upper(local.prefix)}_TRANSFORMED_STAGE"
+  transformed_stage_url           = "s3://${var.stage_bucket_name}/${var.name}/shredded/v1"
+  folder_monitoring_stage_name    = "${upper(local.prefix)}_FOLDER_MONITORING_STAGE"
+  folder_monitoring_stage_url     = "s3://${var.stage_bucket_name}/${var.name}/monitoring"
+  schema_name                     = "ATOMIC"
+
 }
 
 resource "snowflake_storage_integration" "integration" {
@@ -9,7 +16,7 @@ resource "snowflake_storage_integration" "integration" {
   enabled                   = true
   storage_allowed_locations = ["s3://${var.stage_bucket_name}/"]
   storage_provider          = "S3"
-  storage_aws_role_arn      = local.snowflake_load_role_arn
+  storage_aws_role_arn      = local.snowflake_iam_load_role_arn
 }
 
 resource "snowflake_database" "loader" {
@@ -17,7 +24,7 @@ resource "snowflake_database" "loader" {
     prevent_destroy = true
   }
 
-  name = upper(var.sf_db_name)
+  name = local.db_name
 }
 
 resource "snowflake_schema" "atomic" {
@@ -26,11 +33,11 @@ resource "snowflake_schema" "atomic" {
   }
 
   database = snowflake_database.loader.name
-  name     = upper(var.sf_atomic_schema_name)
+  name     = local.schema_name
 }
 
 resource "snowflake_warehouse" "loader" {
-  name           = upper(var.sf_wh_name)
+  name           = local.wh_name
   warehouse_size = var.sf_wh_size
   auto_suspend   = var.sf_wh_auto_suspend
   auto_resume    = var.sf_wh_auto_resume
@@ -49,20 +56,20 @@ resource "snowflake_file_format" "enriched" {
 }
 
 resource "snowflake_stage" "transformed" {
-  name                = "${upper(local.prefix)}_TRANSFORMED_STAGE"
-  url                 = "s3://${var.stage_bucket_name}/${trimsuffix(var.transformed_stage_prefix, "/")}/"
+  name                = local.transformed_stage_name
+  url                 = local.transformed_stage_url
   database            = snowflake_database.loader.name
   schema              = snowflake_schema.atomic.name
   storage_integration = snowflake_storage_integration.integration.name
-  file_format         = "FORMAT_NAME = ${local.sf_full_file_format_name}"
+  file_format         = "FORMAT_NAME = ${local.snowflake_full_file_format_name}"
 }
 
 resource "snowflake_stage" "folder_monitoring" {
-  count               = local.folder_monitoring_enabled ? 1 : 0
-  name                = "${upper(local.prefix)}_FOLDER_MONITORING_STAGE"
-  url                 = "s3://${var.stage_bucket_name}/${trimsuffix(var.folder_monitoring_stage_prefix, "/")}/"
+  count               = var.folder_monitoring_enabled ? 1 : 0
+  name                = local.folder_monitoring_stage_name
+  url                 = local.folder_monitoring_stage_url
   database            = snowflake_database.loader.name
   schema              = snowflake_schema.atomic.name
   storage_integration = snowflake_storage_integration.integration.name
-  file_format         = "FORMAT_NAME = ${local.sf_full_file_format_name}"
+  file_format         = "FORMAT_NAME = ${local.snowflake_full_file_format_name}"
 }

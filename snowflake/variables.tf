@@ -1,12 +1,6 @@
-variable "prefix" {
+variable "name" {
   description = "A name which will be pre-pended to the resources created"
   type        = string
-}
-
-variable "iam_role_enabled" {
-  description = "Specifies whether to create necessary IAM role or not"
-  type        = bool
-  default     = true
 }
 
 variable "stage_bucket_name" {
@@ -14,29 +8,15 @@ variable "stage_bucket_name" {
   type        = string
 }
 
-variable "snowflake_iam_load_role_name" {
-  description = "Name of the IAM role used for loading to Snowflake"
-  type        = string
+variable "folder_monitoring_enabled" {
+  description = "Folder monitoring loading"
+  type        = bool
+  default     = true
 }
 
-variable "transformed_stage_prefix" {
-  description = "Path prefix of S3 location which will be used as transformed stage by Snowflake"
-  type        = string
-}
-
-variable "folder_monitoring_stage_prefix" {
-  description = "Path prefix of S3 location which will be used as folder monitoring stage by Snowflake"
+variable "iam_permissions_boundary" {
+  description = "The permissions boundary ARN to set on IAM roles created"
   default     = ""
-  type        = string
-}
-
-variable "sf_db_name" {
-  description = "The name of the database to connect to"
-  type        = string
-}
-
-variable "sf_wh_name" {
-  description = "The name of the Snowflake warehouse to connect to"
   type        = string
 }
 
@@ -58,26 +38,21 @@ variable "sf_wh_auto_resume" {
   type        = bool
 }
 
-variable "sf_atomic_schema_name" {
-  description = "Name of the atomic schema created in Snowflake"
-  default     = "ATOMIC"
-  type        = string
-}
-
 variable "sf_file_format_name" {
   description = "Name of the Snowflake file format which is used by stage"
   default     = "SNOWPLOW_ENRICHED_JSON"
   type        = string
 }
 
-variable "sf_loader_password" {
+variable "snowflake_loader_password" {
   description = "The password to use to connect to the database"
   type        = string
   sensitive   = true
 }
 
-variable "iam_permissions_boundary" {
-  description = "The permissions boundary ARN to set on IAM roles created"
+variable "account_id" {
+  description = "Account id"
   default     = ""
   type        = string
 }
+

@@ -5,6 +5,8 @@ locals {
   app_name    = "snowplow-snowflake-loader"
   app_version = "3.0.0-rc4"
 
+
+
   local_tags = {
     Name           = var.name
     app_name       = local.app_name
@@ -18,10 +20,9 @@ locals {
     local.local_tags
   )
 
-  account_id                   = data.aws_caller_identity.current.account_id
-  snowflake_iam_load_role_name = "${var.name}-snowflakedb-load"
-  snowflake_load_role_arn      = "arn:aws:iam::${local.account_id}:role/${local.snowflake_iam_load_role_name}"
-  cloudwatch_log_group_name    = "/aws/ec2/${var.name}-snowflake-loader"
+  account_id                     = data.aws_caller_identity.current.account_id
+  snowflake_iam_load_policy_name = "${var.name}-snowflakedb-load-pol"
+  cloudwatch_log_group_name      = "/aws/ec2/${var.name}-snowflake-loader"
 }
 
 data "aws_region" "current" {}
@@ -60,9 +61,65 @@ resource "aws_cloudwatch_log_group" "log_group" {
   tags = local.tags
 }
 
-# --- IAM: Roles & Permissions
+# --- IAM: Roles & Permissions Snowflake
+# --- Storage Integration
+data "aws_iam_policy_document" "snowflake_load_policy" {
+  statement {
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:ListBucket",
+      "s3:GetBucketLocation",
+    ]
+    resources = [
+      "arn:aws:s3:::${var.stage_bucket_name}",
+      "arn:aws:s3:::${var.stage_bucket_name}/*"
+    ]
+  }
+}
 
-resource "aws_iam_role" "iam_role" {
+data "aws_iam_policy_document" "snowflake_load_assume_role_policy_storage_integration" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "AWS"
+      identifiers = [module.snowflake_resources.storage_aws_iam_user_arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "sts:ExternalId"
+
+      values = [module.snowflake_resources.storage_aws_external_id]
+    }
+  }
+}
+
+resource "aws_iam_policy" "snowflakedb_load_policy" {
+  name        = local.snowflake_iam_load_policy_name
+  description = "Access policy for the SnowflakeLoadRole"
+  policy      = data.aws_iam_policy_document.snowflake_load_policy.json
+}
+
+resource "aws_iam_role" "snowflakedb_load_role" {
+  name                 = module.snowflake_resources.snowflake_iam_load_role_name
+  description          = "Role for the Snowplow Snowflake Loader to assume"
+  max_session_duration = 43200
+  assume_role_policy   = data.aws_iam_policy_document.snowflake_load_assume_role_policy_storage_integration.json
+
+  permissions_boundary = var.iam_permissions_boundary
+}
+
+resource "aws_iam_role_policy_attachment" "snowflake_role_policy_attachment" {
+  role       = aws_iam_role.snowflakedb_load_role.name
+  policy_arn = aws_iam_policy.snowflakedb_load_policy.arn
+}
+
+
+# --- IAM: Roles & Permissions Loader
+
+resource "aws_iam_role" "iam_role_loader" {
   name        = "${var.name}-snowflake-loader"
   description = "Allows the Loader nodes to access required services"
   tags        = local.tags
@@ -83,7 +140,7 @@ EOF
   permissions_boundary = var.iam_permissions_boundary
 }
 
-resource "aws_iam_policy" "iam_policy" {
+resource "aws_iam_policy" "iam_policy_loader" {
   name = "${var.name}-snowflake-loader"
 
   policy = jsonencode({
@@ -145,13 +202,13 @@ resource "aws_iam_policy" "iam_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "policy_attachment" {
-  role       = aws_iam_role.iam_role.name
-  policy_arn = aws_iam_policy.iam_policy.arn
+  role       = aws_iam_role.iam_role_loader.name
+  policy_arn = aws_iam_policy.iam_policy_loader.arn
 }
 
 resource "aws_iam_instance_profile" "instance_profile" {
   name = "${var.name}-snowflake-loader"
-  role = aws_iam_role.iam_role.name
+  role = aws_iam_role.iam_role_loader.name
 }
 
 # --- EC2: Security Group Rules
@@ -240,21 +297,22 @@ locals {
     local.resolvers_closed
   ])
 
-  iglu_resolver = templatefile("${path.module}/templates/iglu_resolver.json.tmpl", { resolvers = jsonencode(local.resolvers) })
+  iglu_resolver = templatefile("${path.module}/templates/iglu_resolver.json.tmpl", {
+    resolvers = jsonencode(local.resolvers)
+  })
 
   config = templatefile("${path.module}/templates/config.json.tmpl", {
     region                     = data.aws_region.current.name
     message_queue              = var.sqs_queue_name
     sf_region                  = var.sf_region
-    sf_username                = module.snowflake_resources.sf_loader_username
-    sf_password                = var.sf_loader_password
+    sf_username                = module.snowflake_resources.snowflake_username
+    sf_password                = module.snowflake_resources.snowflake_password
     sf_account                 = var.sf_account
-    sf_wh_name                 = var.sf_wh_name
-    sf_db_name                 = var.sf_db_name
-    sf_transformed_stage       = module.snowflake_resources.sf_transformed_stage
-    folder_monitoring_enabled  = var.folder_monitoring_enabled
-    sf_folder_monitoring_stage = module.snowflake_resources.sf_folder_monitoring_stage
-    sf_schema                  = var.sf_atomic_schema_name
+    sf_wh_name                 = module.snowflake_resources.snowflake_warehouse
+    sf_db_name                 = module.snowflake_resources.snowflake_database
+    sf_transformed_stage       = module.snowflake_resources.transformed_stage_name
+    sf_schema                  = module.snowflake_resources.snowflake_schema
+    shredder_output            = module.snowflake_resources.transformed_stage_path
     sf_max_error_given         = var.sf_max_error != -1
     sf_max_error               = var.sf_max_error
     sp_tracking_enabled        = var.sp_tracking_enabled
@@ -268,11 +326,12 @@ locals {
     stdout_metrics_enabled     = var.stdout_metrics_enabled
     webhook_enabled            = var.webhook_enabled
     webhook_collector          = var.webhook_collector
+    folder_monitoring_enabled  = var.folder_monitoring_enabled
+    sf_folder_monitoring_stage = module.snowflake_resources.monitoring_stage_name
     folder_monitoring_staging  = module.snowflake_resources.folder_monitoring_stage_path
     folder_monitoring_period   = var.folder_monitoring_period
     folder_monitoring_since    = var.folder_monitoring_since
     folder_monitoring_until    = var.folder_monitoring_until
-    shredder_output            = module.snowflake_resources.transformed_stage_path
     health_check_enabled       = var.health_check_enabled
     health_check_freq          = var.health_check_freq
     health_check_timeout       = var.health_check_timeout
@@ -354,15 +413,11 @@ resource "aws_autoscaling_group" "asg" {
 module "snowflake_resources" {
   source = "./snowflake"
 
-  prefix                         = var.name
-  stage_bucket_name              = var.stage_bucket_name
-  snowflake_iam_load_role_name   = local.snowflake_iam_load_role_name
-  transformed_stage_prefix       = var.transformed_stage_prefix
-  folder_monitoring_stage_prefix = var.folder_monitoring_stage_prefix
-  sf_db_name                     = var.sf_db_name
-  sf_wh_name                     = var.sf_wh_name
-  sf_loader_password             = var.sf_loader_password
-  iam_permissions_boundary       = var.iam_permissions_boundary
+  name                      = var.name
+  stage_bucket_name         = var.stage_bucket_name
+  snowflake_loader_password = var.snowflake_loader_password
+  iam_permissions_boundary  = var.iam_permissions_boundary
+  snowflake_load_role_arn   = aws_iam_role.snowflakedb_load_role.arn
 }
 
 module "telemetry" {

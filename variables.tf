@@ -1,68 +1,6 @@
 variable "name" {
-  description = "A name which will be pre-pended to the resources created"
+  description = "A name which will be prepended to the resources created"
   type        = string
-}
-
-variable "stage_bucket_name" {
-  description = "Name of the S3 bucket which will be used as stage by Snowflake"
-  type        = string
-}
-
-variable "transformed_stage_prefix" {
-  description = "Path prefix of S3 location which will be used as transformed stage by Snowflake"
-  type        = string
-}
-
-variable "folder_monitoring_stage_prefix" {
-  description = "Path prefix of S3 location which will be used as folder monitoring stage by Snowflake"
-  default     = ""
-  type        = string
-}
-
-variable "sf_db_name" {
-  description = "The name of the database to connect to"
-  type        = string
-}
-
-variable "sf_wh_name" {
-  description = "The name of the Snowflake warehouse to connect to"
-  type        = string
-}
-
-variable "sf_wh_size" {
-  description = "Size of the Snowflake warehouse to connect to"
-  default     = "XSMALL"
-  type        = string
-}
-
-variable "sf_wh_auto_suspend" {
-  description = "Time period to wait before suspending warehouse"
-  default     = 60
-  type        = number
-}
-
-variable "sf_wh_auto_resume" {
-  description = "Whether to enable auto resume which makes automatically resume the warehouse when any statement that requires a warehouse is submitted "
-  default     = true
-  type        = bool
-}
-
-variable "sf_atomic_schema_name" {
-  description = "Name of the atomic schema created in Snowflake"
-  default     = "ATOMIC"
-  type        = string
-}
-
-variable "sf_file_format_name" {
-  description = "Name of the Snowflake file format which is used by stage"
-  default     = "SNOWPLOW_ENRICHED_JSON"
-  type        = string
-}
-
-variable "sf_loader_password" {
-  description = "The password to use to connect to the database"
-  type        = string
-  sensitive   = true
 }
 
 variable "iam_permissions_boundary" {
@@ -135,23 +73,13 @@ variable "sqs_queue_name" {
   type        = string
 }
 
-variable "sf_region" {
-  description = "Snowflake account region"
-  type        = string
-}
-
-variable "sf_account" {
-  description = "Snowflake account name"
-  type        = string
-}
-
 variable "folder_monitoring_enabled" {
   description = "Whether folder monitoring should be activated or not"
   default     = false
   type        = bool
 }
 
-variable "sf_max_error" {
+variable "max_error" {
   description = "A table copy statement will skip an input file when the number of errors in it exceeds the specified number"
   default     = -1
   type        = number
@@ -342,4 +270,73 @@ variable "user_provided_id" {
   description = "An optional unique identifier to identify the telemetry events emitted by this stack"
   type        = string
   default     = ""
+}
+
+# --- Snowflake parameters
+
+variable "snowflake_loader_user" {
+  description = "Snowflake username used by loader to perform loading"
+  type        = string
+}
+
+variable "snowflake_password" {
+  description = "Password for snowflake_loader_user used by loader to perform loading"
+  type        = string
+  sensitive   = true
+}
+
+variable "snowflake_loader_role" {
+  description = "Snowflake role for loading snowplow data"
+  type        = string
+}
+
+variable "snowflake_warehouse" {
+  description = "Snowflake warehouse name"
+  type        = string
+}
+
+variable "snowflake_database" {
+  description = "Snowflake database name"
+  type        = string
+}
+
+variable "snowflake_schema" {
+  description = "Snowflake schema name"
+  type        = string
+}
+
+variable "snowflake_transformed_stage_name" {
+  description = "Name of transformed stage"
+  type        = string
+}
+
+variable "snowflake_monitoring_stage_name" {
+  description = "Name of monitoring stage"
+  type        = string
+  default     = ""
+}
+
+variable "snowflake_region" {
+  description = "Snowflake region"
+  type        = string
+}
+
+variable "snowflake_account" {
+  description = "Snowflake account"
+  type        = string
+}
+variable "snowflake_aws_s3_transformed_stage_url" {
+  description = "AWS bucket url of transformed stage"
+  type        = string
+}
+
+variable "snowflake_aws_s3_folder_monitoring_stage_url" {
+  description = "AWS bucket url of folder monitoring stage"
+  type        = string
+  default     = ""
+}
+
+variable "snowflake_aws_s3_stage_bucket_name" {
+  description = "AWS bucket url of folder monitoring stage"
+  type        = string
 }

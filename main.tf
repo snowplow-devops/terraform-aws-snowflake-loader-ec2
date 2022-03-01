@@ -16,8 +16,8 @@ locals {
   }
 
   tags = merge(
-    var.tags,
-    local.local_tags
+  var.tags,
+  local.local_tags
   )
 
   account_id                     = data.aws_caller_identity.current.account_id
@@ -65,7 +65,7 @@ resource "aws_cloudwatch_log_group" "log_group" {
 # --- Storage Integration
 data "aws_iam_policy_document" "snowflake_load_policy" {
   statement {
-    actions = [
+    actions   = [
       "s3:GetObject",
       "s3:GetObjectVersion",
       "s3:ListBucket",
@@ -98,12 +98,14 @@ data "aws_iam_policy_document" "snowflake_load_assume_role_policy_storage_integr
 
 resource "aws_iam_policy" "snowflakedb_load_policy" {
   name        = local.snowflake_iam_load_policy_name
+  tags        = local.tags
   description = "Access policy for the SnowflakeLoadRole"
   policy      = data.aws_iam_policy_document.snowflake_load_policy.json
 }
 
 resource "aws_iam_role" "snowflakedb_load_role" {
-  name                 = module.snowflake_resources.snowflake_iam_load_role_name
+  name                 = module.snowflake_resources.iam_load_role_name
+  tags                 = local.tags
   description          = "Role for the Snowplow Snowflake Loader to assume"
   max_session_duration = 43200
   assume_role_policy   = data.aws_iam_policy_document.snowflake_load_assume_role_policy_storage_integration.json
@@ -117,7 +119,8 @@ resource "aws_iam_role_policy_attachment" "snowflake_role_policy_attachment" {
 }
 
 
-# --- IAM: Roles & Permissions Loader
+# --- IAM: Roles & Permissions
+# --- Loader
 
 resource "aws_iam_role" "iam_role_loader" {
   name        = "${var.name}-snowflake-loader"
@@ -142,61 +145,62 @@ EOF
 
 resource "aws_iam_policy" "iam_policy_loader" {
   name = "${var.name}-snowflake-loader"
+  tags = local.tags
 
   policy = jsonencode({
-    Version = "2012-10-17",
+    Version   = "2012-10-17",
     Statement = concat(
-      var.folder_monitoring_enabled ? [
-        {
-          Effect = "Allow",
-          Action = [
-            "s3:ListBucket",
-            "s3:PutObject"
-          ],
-          Resource = [
-            "arn:aws:s3:::${var.stage_bucket_name}",
-            "arn:aws:s3:::${var.stage_bucket_name}/*"
-          ]
-        }
-      ] : [],
-      [
-        {
-          Effect = "Allow",
-          Action = [
-            "sqs:DeleteMessage",
-            "sqs:GetQueueUrl",
-            "sqs:ListQueues",
-            "sqs:ChangeMessageVisibility",
-            "sqs:SendMessageBatch",
-            "sqs:ReceiveMessage",
-            "sqs:SendMessage",
-            "sqs:DeleteMessageBatch",
-            "sqs:ChangeMessageVisibilityBatch"
-          ],
-          Resource = [
-            "arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.sqs_queue_name}"
-          ]
-        },
-        {
-          Effect = "Allow",
-          Action = [
-            "logs:PutLogEvents",
-            "logs:CreateLogStream",
-            "logs:DescribeLogStreams"
-          ],
-          Resource = [
-            "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${local.cloudwatch_log_group_name}:*"
-          ]
-        },
-        {
-          Effect = "Allow",
-          Action = [
-            "cloudwatch:ListMetrics",
-            "cloudwatch:PutMetricData"
-          ],
-          Resource = "*"
-        }
-      ]
+    var.folder_monitoring_enabled ? [
+      {
+        Effect   = "Allow",
+        Action   = [
+          "s3:ListBucket",
+          "s3:PutObject"
+        ],
+        Resource = [
+          "arn:aws:s3:::${var.stage_bucket_name}",
+          "arn:aws:s3:::${var.stage_bucket_name}/*"
+        ]
+      }
+    ] : [],
+    [
+      {
+        Effect   = "Allow",
+        Action   = [
+          "sqs:DeleteMessage",
+          "sqs:GetQueueUrl",
+          "sqs:ListQueues",
+          "sqs:ChangeMessageVisibility",
+          "sqs:SendMessageBatch",
+          "sqs:ReceiveMessage",
+          "sqs:SendMessage",
+          "sqs:DeleteMessageBatch",
+          "sqs:ChangeMessageVisibilityBatch"
+        ],
+        Resource = [
+          "arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.sqs_queue_name}"
+        ]
+      },
+      {
+        Effect   = "Allow",
+        Action   = [
+          "logs:PutLogEvents",
+          "logs:CreateLogStream",
+          "logs:DescribeLogStreams"
+        ],
+        Resource = [
+          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${local.cloudwatch_log_group_name}:*"
+        ]
+      },
+      {
+        Effect   = "Allow",
+        Action   = [
+          "cloudwatch:ListMetrics",
+          "cloudwatch:PutMetricData"
+        ],
+        Resource = "*"
+      }
+    ]
     )
   })
 }
@@ -262,34 +266,34 @@ locals {
   resolvers_raw = concat(var.default_iglu_resolvers, var.custom_iglu_resolvers)
 
   resolvers_open = [
-    for resolver in local.resolvers_raw : merge(
-      {
-        name           = resolver["name"],
-        priority       = resolver["priority"],
-        vendorPrefixes = resolver["vendor_prefixes"],
-        connection = {
-          http = {
-            uri = resolver["uri"]
-          }
-        }
+  for resolver in local.resolvers_raw : merge(
+  {
+    name           = resolver["name"],
+    priority       = resolver["priority"],
+    vendorPrefixes = resolver["vendor_prefixes"],
+    connection     = {
+      http = {
+        uri = resolver["uri"]
       }
-    ) if resolver["api_key"] == ""
+    }
+  }
+  ) if resolver["api_key"] == ""
   ]
 
   resolvers_closed = [
-    for resolver in local.resolvers_raw : merge(
-      {
-        name           = resolver["name"],
-        priority       = resolver["priority"],
-        vendorPrefixes = resolver["vendor_prefixes"],
-        connection = {
-          http = {
-            uri    = resolver["uri"]
-            apikey = resolver["api_key"]
-          }
-        }
+  for resolver in local.resolvers_raw : merge(
+  {
+    name           = resolver["name"],
+    priority       = resolver["priority"],
+    vendorPrefixes = resolver["vendor_prefixes"],
+    connection     = {
+      http = {
+        uri    = resolver["uri"]
+        apikey = resolver["api_key"]
       }
-    ) if resolver["api_key"] != ""
+    }
+  }
+  ) if resolver["api_key"] != ""
   ]
 
   resolvers = flatten([
@@ -310,7 +314,7 @@ locals {
     sf_account                 = var.sf_account
     sf_wh_name                 = module.snowflake_resources.snowflake_warehouse
     sf_db_name                 = module.snowflake_resources.snowflake_database
-    sf_transformed_stage       = module.snowflake_resources.transformed_stage_name
+    sf_transformed_stage       = module.snowflake_resources.snowflake_transformed_stage_name
     sf_schema                  = module.snowflake_resources.snowflake_schema
     shredder_output            = module.snowflake_resources.transformed_stage_path
     sf_max_error_given         = var.sf_max_error != -1
@@ -327,7 +331,7 @@ locals {
     webhook_enabled            = var.webhook_enabled
     webhook_collector          = var.webhook_collector
     folder_monitoring_enabled  = var.folder_monitoring_enabled
-    sf_folder_monitoring_stage = module.snowflake_resources.monitoring_stage_name
+    sf_folder_monitoring_stage = module.snowflake_resources.snowflake_monitoring_stage_name
     folder_monitoring_staging  = module.snowflake_resources.folder_monitoring_stage_path
     folder_monitoring_period   = var.folder_monitoring_period
     folder_monitoring_since    = var.folder_monitoring_since

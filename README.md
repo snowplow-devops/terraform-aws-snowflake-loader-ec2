@@ -17,13 +17,21 @@ To disable telemetry simply set variable `telemetry_enabled = false`.
 ### What are you collecting?
 
 For details on what information is collected please see this module: https://github.com/snowplow-devops/terraform-snowplow-telemetry
+
 ## Usage
 
 Snowflake Loader loads transformed events from S3 bucket to Snowflake. 
 
-Events are initially transformed to wide row format by transformer. After transformation is finished, transformer sends SQS message to given SQS queue. SQS message contains pieces of information related with transformed events. These are S3 location of transformed events, keys of the custom schemas found in the transformed events. Snowflake Loader gets messages from common SQS queue and loads transformed events to Snowflake. The events which is loaded to Snowflake are the ones which their location is specified in the received SQS message.
+Events are initially transformed to wide row format by transformer. After transformation is finished, transformer sends 
+SQS message to given SQS queue. SQS message contains pieces of information related with transformed events. These are 
+the S3 location of transformed events and the keys of the custom schemas found in the transformed events. Snowflake 
+Loader gets messages from common SQS queue and loads transformed events to Snowflake. The events which are loaded to 
+Snowflake are the ones which where indicated by the processed SQS message.
 
-You will need service user to be able to create necessary Snowflake resources. You can [follow this tutorial][snowflake-service-user-tutorial] to do that. After creating the user with public key, you can either pass necessary values to Snowflake provider directly similar to example in the below or you can set respective environment variables as [described in here][snowflake-env-vars].
+You will need a service user to be able to create the necessary Snowflake resources. You can
+[follow this tutorial][snowflake-service-user-tutorial] to do that. After creating the user with a public key, you can
+either pass necessary values to Snowflake provider directly, similar to the example below, or you can set respective
+environment variables as [described here][snowflake-env-vars].
 
 ```hcl
 provider "aws" {
@@ -31,22 +39,23 @@ provider "aws" {
 }
 
 provider "snowflake" {
-  username = var.sf_operator_username
-  account  = var.sf_account
-  region   = var.sf_region
-  role     = var.sf_operator_user_role
+  username         = var.sf_operator_username
+  account          = var.sf_account
+  region           = var.sf_region
+  role             = var.sf_operator_user_role
   private_key_path = var.sf_private_key_path
 }
 
-resource "aws_s3_bucket" "shredder_output" {
-  bucket = var.name
-  acl    = "private"
+module "s3_bucket" {
+  source = "snowplow-devops/s3-bucket/aws"
+
+  bucket_name = var.name
 }
 
 resource "aws_sqs_queue" "message_queue" {
   content_based_deduplication = true
   kms_master_key_id           = "alias/aws/sqs"
-  name                        = var.queue_name
+  name                        = "${var.queue_name}.fifo"
   fifo_queue                  = true
 }
 
@@ -58,13 +67,12 @@ resource "aws_key_pair" "sf_loader" {
 module "snowflake_loader" {
   source = "terraform-snowflake-loader"
 
-  name             = var.name
-  vpc_id           = var.vpc_id
-  subnet_ids       = var.subnet_ids
-  ssh_key_name     = aws_key_pair.sf_loader.key_name
-  ssh_ip_allowlist = ["0.0.0.0/0"]
-
-  stage_bucket_name        = aws_s3_bucket.shredder_output.id
+  name                     = var.name
+  vpc_id                   = var.vpc_id
+  subnet_ids               = var.subnet_ids
+  ssh_key_name             = aws_key_pair.sf_loader.key_name
+  ssh_ip_allowlist         = ["0.0.0.0/0"]
+  stage_bucket_name        = module.s3_bucket.id
   transformed_stage_prefix = "prefix"
   sf_loader_password       = "super_password"
   sqs_queue_name           = aws_sqs_queue.message_queue.name

@@ -1,6 +1,6 @@
 resource "snowflake_table" "events" {
-  database = snowflake_database.loader.name
-  schema   = snowflake_schema.atomic.name
+  database = local.db_name
+  schema   = var.snowflake_schema
   name     = "EVENTS"
 
   lifecycle {

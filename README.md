@@ -159,7 +159,7 @@ module "snowflake_loader" {
 |------|-------------|------|---------|:--------:|
 | <a name="input_name"></a> [name](#input\_name) | A name which will be prepended to the resources created | `string` | n/a | yes |
 | <a name="input_snowflake_account"></a> [snowflake\_account](#input\_snowflake\_account) | Snowflake account | `string` | n/a | yes |
-| <a name="input_snowflake_aws_s3_stage_bucket_name"></a> [snowflake\_aws\_s3\_stage\_bucket\_name](#input\_snowflake\_aws\_s3\_stage\_bucket\_name) | AWS bucket url of folder monitoring stage | `string` | n/a | yes |
+| <a name="input_snowflake_aws_s3_stage_bucket_name"></a> [snowflake\_aws\_s3\_stage\_bucket\_name](#input\_snowflake\_aws\_s3\_stage\_bucket\_name) | AWS stage bucket | `string` | n/a | yes |
 | <a name="input_snowflake_aws_s3_transformed_stage_url"></a> [snowflake\_aws\_s3\_transformed\_stage\_url](#input\_snowflake\_aws\_s3\_transformed\_stage\_url) | AWS bucket url of transformed stage | `string` | n/a | yes |
 | <a name="input_snowflake_database"></a> [snowflake\_database](#input\_snowflake\_database) | Snowflake database name | `string` | n/a | yes |
 | <a name="input_snowflake_loader_role"></a> [snowflake\_loader\_role](#input\_snowflake\_loader\_role) | Snowflake role for loading snowplow data | `string` | n/a | yes |

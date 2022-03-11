@@ -337,6 +337,6 @@ variable "snowflake_aws_s3_folder_monitoring_stage_url" {
 }
 
 variable "snowflake_aws_s3_stage_bucket_name" {
-  description = "AWS bucket url of folder monitoring stage"
+  description = "AWS stage bucket"
   type        = string
 }

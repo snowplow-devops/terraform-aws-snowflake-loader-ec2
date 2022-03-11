@@ -1,4 +1,4 @@
-[![License][license-image]][license]
+[![Release][release-image]][release] [![CI][ci-image]][ci] [![License][license-image]][license] [![Registry][registry-image]][registry] [![Source][source-image]][source]
 
 # terraform-snowflake-loader
 
@@ -236,5 +236,17 @@ limitations under the License.
 [snowflake-service-user-tutorial]: https://quickstarts.snowflake.com/guide/terraforming_snowflake/index.html?index=..%2F..index#2
 [snowflake-env-vars]: https://quickstarts.snowflake.com/guide/terraforming_snowflake/index.html?index=..%2F..index#3
 
+[release]: https://github.com/snowplow-devops/terraform-aws-snowflake-loader-ec2/releases/latest
+[release-image]: https://img.shields.io/github/v/release/snowplow-devops/terraform-aws-snowflake-loader-ec2
+
+[ci]: https://github.com/snowplow-devops/terraform-aws-snowflake-loader-ec2/actions?query=workflow%3Aci
+[ci-image]: https://github.com/snowplow-devops/terraform-aws-snowflake-loader-ec2/workflows/ci/badge.svg
+
 [license]: https://www.apache.org/licenses/LICENSE-2.0
 [license-image]: https://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
+
+[registry]: https://registry.terraform.io/modules/snowplow-devops/aws-snowflake-loader-ec2/PROVIDER/latest
+[registry-image]: https://img.shields.io/static/v1?label=Terraform&message=Registry&color=7B42BC&logo=terraform
+
+[source]: https://github.com/snowplow/snowplow
+[source-image]: https://img.shields.io/static/v1?label=Snowplow&message=aws-snowflake-loader-ec2&color=0E9BA4&logo=GitHub

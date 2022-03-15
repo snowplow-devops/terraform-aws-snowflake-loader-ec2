@@ -14,8 +14,8 @@ locals {
   }
 
   tags = merge(
-    var.tags,
-    local.local_tags
+  var.tags,
+  local.local_tags
   )
 
   cloudwatch_log_group_name = "/aws/ec2/${var.name}"
@@ -99,59 +99,51 @@ resource "aws_iam_policy" "iam_policy" {
   tags = local.tags
 
   policy = jsonencode({
-    Version = "2012-10-17",
+    Version   = "2012-10-17",
     Statement = concat(
-      var.folder_monitoring_enabled ? [
-        {
-          Effect = "Allow",
-          Action = [
-            "s3:ListBucket",
-            "s3:PutObject"
-          ],
-          Resource = [
-            "arn:aws:s3:::${var.snowflake_aws_s3_stage_bucket_name}",
-            "arn:aws:s3:::${var.snowflake_aws_s3_stage_bucket_name}/*"
-          ]
-        }
-      ] : [],
-      [
-        {
-          Effect = "Allow",
-          Action = [
-            "sqs:DeleteMessage",
-            "sqs:GetQueueUrl",
-            "sqs:ListQueues",
-            "sqs:ChangeMessageVisibility",
-            "sqs:SendMessageBatch",
-            "sqs:ReceiveMessage",
-            "sqs:SendMessage",
-            "sqs:DeleteMessageBatch",
-            "sqs:ChangeMessageVisibilityBatch"
-          ],
-          Resource = [
-            "arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.sqs_queue_name}"
-          ]
-        },
-        {
-          Effect = "Allow",
-          Action = [
-            "logs:PutLogEvents",
-            "logs:CreateLogStream",
-            "logs:DescribeLogStreams"
-          ],
-          Resource = [
-            "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${local.cloudwatch_log_group_name}:*"
-          ]
-        },
-        {
-          Effect = "Allow",
-          Action = [
-            "cloudwatch:ListMetrics",
-            "cloudwatch:PutMetricData"
-          ],
-          Resource = "*"
-        }
-      ]
+    var.folder_monitoring_enabled ? [
+      {
+        Effect   = "Allow",
+        Action   = [
+          "s3:ListBucket",
+          "s3:PutObject"
+        ],
+        Resource = [
+          "arn:aws:s3:::${var.snowflake_aws_s3_stage_bucket_name}",
+          "arn:aws:s3:::${var.snowflake_aws_s3_stage_bucket_name}/*"
+        ]
+      }
+    ] : [],
+    [
+      {
+        Effect   = "Allow",
+        Action   = [
+          "sqs:DeleteMessage",
+          "sqs:GetQueueUrl",
+          "sqs:ListQueues",
+          "sqs:ChangeMessageVisibility",
+          "sqs:SendMessageBatch",
+          "sqs:ReceiveMessage",
+          "sqs:SendMessage",
+          "sqs:DeleteMessageBatch",
+          "sqs:ChangeMessageVisibilityBatch"
+        ],
+        Resource = [
+          "arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.sqs_queue_name}"
+        ]
+      },
+      {
+        Effect   = "Allow",
+        Action   = [
+          "logs:PutLogEvents",
+          "logs:CreateLogStream",
+          "logs:DescribeLogStreams"
+        ],
+        Resource = [
+          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${local.cloudwatch_log_group_name}:*"
+        ]
+      }
+    ]
     )
   })
 }
@@ -211,40 +203,51 @@ resource "aws_security_group_rule" "egress_udp_123" {
   security_group_id = aws_security_group.sg.id
 }
 
+# Needed for statd
+resource "aws_security_group_rule" "egress_udp_statd" {
+  count             = var.statsd_enabled ? 1 : 0
+  type              = "egress"
+  from_port         = var.statsd_port
+  to_port           = var.statsd_port
+  protocol          = "udp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.sg.id
+}
+
 # --- EC2: Auto-scaling group & Launch Configurations
 
 locals {
   resolvers_raw = concat(var.default_iglu_resolvers, var.custom_iglu_resolvers)
 
   resolvers_open = [
-    for resolver in local.resolvers_raw : merge(
-      {
-        name           = resolver["name"],
-        priority       = resolver["priority"],
-        vendorPrefixes = resolver["vendor_prefixes"],
-        connection = {
-          http = {
-            uri = resolver["uri"]
-          }
-        }
+  for resolver in local.resolvers_raw : merge(
+  {
+    name           = resolver["name"],
+    priority       = resolver["priority"],
+    vendorPrefixes = resolver["vendor_prefixes"],
+    connection     = {
+      http = {
+        uri = resolver["uri"]
       }
-    ) if resolver["api_key"] == ""
+    }
+  }
+  ) if resolver["api_key"] == ""
   ]
 
   resolvers_closed = [
-    for resolver in local.resolvers_raw : merge(
-      {
-        name           = resolver["name"],
-        priority       = resolver["priority"],
-        vendorPrefixes = resolver["vendor_prefixes"],
-        connection = {
-          http = {
-            uri    = resolver["uri"]
-            apikey = resolver["api_key"]
-          }
-        }
+  for resolver in local.resolvers_raw : merge(
+  {
+    name           = resolver["name"],
+    priority       = resolver["priority"],
+    vendorPrefixes = resolver["vendor_prefixes"],
+    connection     = {
+      http = {
+        uri    = resolver["uri"]
+        apikey = resolver["api_key"]
       }
-    ) if resolver["api_key"] != ""
+    }
+  }
+  ) if resolver["api_key"] != ""
   ]
 
   resolvers = flatten([

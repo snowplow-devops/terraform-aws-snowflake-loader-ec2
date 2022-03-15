@@ -129,7 +129,7 @@ variable "statsd_host" {
 
 variable "statsd_port" {
   description = "Port of StatsD server"
-  default     = -1
+  default     = 8125
   type        = number
 }
 

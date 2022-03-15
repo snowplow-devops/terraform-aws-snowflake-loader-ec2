@@ -30,6 +30,8 @@ Details on `snowflake` provider configuration described at the same [page](https
 
 The `snowflake_region` and `snowflake_account` should be supplied directly. 
 
+Duration settings such as `folder_monitoring_period` or `retry_period` should be given in [duration-doc].
+
 See example below:
 
 ```hcl
@@ -273,6 +275,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
+[duration-doc]: https://github.com/lightbend/config/blob/main/HOCON.md#duration-format
 [snowflake-service-user-tutorial]: https://quickstarts.snowflake.com/guide/terraforming_snowflake/index.html?index=..%2F..index#2
 [snowflake-env-vars]: https://quickstarts.snowflake.com/guide/terraforming_snowflake/index.html?index=..%2F..index#3
 

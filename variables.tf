@@ -155,18 +155,33 @@ variable "folder_monitoring_period" {
   description = "How often to folder should be checked by folder monitoring"
   default     = "8 hours"
   type        = string
+
+  validation {
+    condition     = can(regex("\\d+ (ns|nano|nanos|nanosecond|nanoseconds|us|micro|micros|microsecond|microseconds|ms|milli|millis|millisecond|milliseconds|s|second|seconds|m|minute|minutes|h|hour|hours|d|day|days)", var.folder_monitoring_period))
+    error_message = "Invalid period formant."
+  }
 }
 
 variable "folder_monitoring_since" {
   description = "Specifies since when folder monitoring will check"
   default     = "14 days"
   type        = string
+
+  validation {
+    condition     = can(regex("\\d+ (ns|nano|nanos|nanosecond|nanoseconds|us|micro|micros|microsecond|microseconds|ms|milli|millis|millisecond|milliseconds|s|second|seconds|m|minute|minutes|h|hour|hours|d|day|days)", var.folder_monitoring_since))
+    error_message = "Invalid period formant."
+  }
 }
 
 variable "folder_monitoring_until" {
   description = "Specifies until when folder monitoring will check"
   default     = "6 hours"
   type        = string
+
+  validation {
+    condition     = can(regex("\\d+ (ns|nano|nanos|nanosecond|nanoseconds|us|micro|micros|microsecond|microseconds|ms|milli|millis|millisecond|milliseconds|s|second|seconds|m|minute|minutes|h|hour|hours|d|day|days)", var.folder_monitoring_until))
+    error_message = "Invalid period formant."
+  }
 }
 
 variable "health_check_enabled" {
@@ -177,14 +192,24 @@ variable "health_check_enabled" {
 
 variable "health_check_freq" {
   description = "Frequency of health check"
-  default     = ""
+  default     = "1 hour"
   type        = string
+
+  validation {
+    condition     = can(regex("\\d+ (ns|nano|nanos|nanosecond|nanoseconds|us|micro|micros|microsecond|microseconds|ms|milli|millis|millisecond|milliseconds|s|second|seconds|m|minute|minutes|h|hour|hours|d|day|days)", var.health_check_freq))
+    error_message = "Invalid period formant."
+  }
 }
 
 variable "health_check_timeout" {
   description = "How long to wait for a response for health check query"
-  default     = ""
+  default     = "1 min"
   type        = string
+
+  validation {
+    condition     = can(regex("\\d+ (ns|nano|nanos|nanosecond|nanoseconds|us|micro|micros|microsecond|microseconds|ms|milli|millis|millisecond|milliseconds|s|second|seconds|m|minute|minutes|h|hour|hours|d|day|days)", var.health_check_timeout))
+    error_message = "Invalid period formant."
+  }
 }
 
 variable "retry_queue_enabled" {
@@ -195,8 +220,13 @@ variable "retry_queue_enabled" {
 
 variable "retry_period" {
   description = "How often batch of failed folders should be pulled into a discovery queue"
-  default     = ""
+  default     = "10 min"
   type        = string
+
+  validation {
+    condition     = can(regex("\\d+ (ns|nano|nanos|nanosecond|nanoseconds|us|micro|micros|microsecond|microseconds|ms|milli|millis|millisecond|milliseconds|s|second|seconds|m|minute|minutes|h|hour|hours|d|day|days)", var.retry_period))
+    error_message = "Invalid period formant."
+  }
 }
 
 variable "retry_queue_size" {
@@ -213,8 +243,13 @@ variable "retry_queue_max_attempt" {
 
 variable "retry_queue_interval" {
   description = "Artificial pause after each failed folder being added to the queue"
-  default     = ""
+  default     = "10 min"
   type        = string
+
+  validation {
+    condition     = can(regex("\\d+ (ns|nano|nanos|nanosecond|nanoseconds|us|micro|micros|microsecond|microseconds|ms|milli|millis|millisecond|milliseconds|s|second|seconds|m|minute|minutes|h|hour|hours|d|day|days)", var.retry_queue_interval))
+    error_message = "Invalid period formant."
+  }
 }
 
 # --- Iglu Resolver

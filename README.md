@@ -49,7 +49,7 @@ module "snowflake_setup" {
   source = "snowplow-devops/snowflake-loader-setup/aws"
 
   name               = "snowplow"
-  stage_bucket_name  = "stage_bucket"
+  stage_bucket_name  =  module.s3_bucket.id
   account_id         = "000000000"
   sf_loader_password = "example_password"
 }
@@ -70,6 +70,62 @@ resource "aws_sqs_queue" "message_queue" {
 resource "aws_key_pair" "sf_loader" {
   key_name   = "sf_loader_key_name"
   public_key = var.ssh_public_key
+}
+
+# --- Storage Integration
+
+data "aws_iam_policy_document" "snowflake_load_policy" {
+  statement {
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:ListBucket",
+      "s3:GetBucketLocation",
+    ]
+    resources = [
+      "arn:aws:s3:::${module.s3_bucket.id}",
+      "arn:aws:s3:::${module.s3_bucket.id}/*"
+    ]
+  }
+}
+
+data "aws_iam_policy_document" "snowflake_load_assume_role_policy_storage_integration" {
+  statement {
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "AWS"
+      identifiers = [module.snowflake_setup.aws_iam_storage_integration_user_arn]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "sts:ExternalId"
+
+      values = [module.snowflake_setup.aws_storage_external_id]
+    }
+  }
+}
+
+resource "aws_iam_policy" "snowflakedb_load_policy" {
+  name        = "${var.prefix}-snowflake-loader-pol"
+  tags        = var.tags
+  description = "Access policy for the Snowflake loading role"
+  policy      = data.aws_iam_policy_document.snowflake_load_policy.json
+}
+
+resource "aws_iam_role" "snowflakedb_load_role" {
+  name                 = module.snowflake_setup.aws_iam_storage_integration_role_name
+  tags                 = var.tags
+  description          = "Role for the Snowplow Snowflake Loader to assume"
+  max_session_duration = 43200
+  assume_role_policy   = data.aws_iam_policy_document.snowflake_load_assume_role_policy_storage_integration.json
+  permissions_boundary = var.iam_permissions_boundary
+}
+
+resource "aws_iam_role_policy_attachment" "snowflake_role_policy_attachment" {
+  role       = aws_iam_role.snowflakedb_load_role.name
+  policy_arn = aws_iam_policy.snowflakedb_load_policy.arn
 }
 
 module "snowflake_loader" {
@@ -94,12 +150,6 @@ module "snowflake_loader" {
   snowflake_monitoring_stage_name                        = module.snowflake_setup.snowflake_monitoring_stage_name
   snowflake_region                                       = module.snowflake_setup.snowflake_region
   snowflake_account                                      = module.snowflake_setup.snowflake_account
-  snowflake_aws_s3_transformed_stage_url                 = module.snowflake_setup.snowflake_aws_s3_transformed_stage_url
-  snowflake_aws_s3_folder_monitoring_stage_url           = module.snowflake_setup.snowflake_aws_s3_folder_monitoring_stage_url
-  snowflake_aws_storage_external_id                      = module.snowflake_setup.snowflake_aws_storage_external_id
-  snowflake_aws_iam_storage_integration_user_arn         = module.snowflake_setup.aws_iam_storage_integration_user_arn
-  snowflake_aws_iam_load_role_name                       = module.snowflake_setup.aws_iam_load_role_name
-  snowflake_aws_s3_stage_bucket_name                     = module.snowflake_setup.aws_s3_stage_bucket_name
 }
 ```
 

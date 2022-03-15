@@ -1,8 +1,8 @@
 [![Release][release-image]][release] [![CI][ci-image]][ci] [![License][license-image]][license] [![Registry][registry-image]][registry] [![Source][source-image]][source]
 
-# terraform-snowflake-loader
+# terraform-aws-snowflake-loader-ec2
 
-A Terraform module which creates necessary resources on Snowflake and deploys the Snowplow Snowflake Loader on EC2.
+A Terraform module which deploys the Snowplow Snowflake Loader on an EC2 node.
 
 ## Telemetry
 
@@ -22,17 +22,13 @@ For details on what information is collected please see this module: https://git
 
 Snowflake Loader loads transformed events from S3 bucket to Snowflake. 
 
-Events are initially transformed to wide row format by transformer. After transformation is finished, transformer sends 
-SQS message to given SQS queue. SQS message contains pieces of information related with transformed events. These are 
-the S3 location of transformed events and the keys of the custom schemas found in the transformed events. Snowflake 
-Loader gets messages from common SQS queue and loads transformed events to Snowflake. The events which are loaded to 
-Snowflake are the ones which where indicated by the processed SQS message.
+Events are initially transformed to wide row format by transformer. After transformation is finished, transformer sends SQS message to given SQS queue. SQS message contains pieces of information related with transformed events. These are the S3 location of transformed events and the keys of the custom schemas found in the transformed events. Snowflake Loader gets messages from common SQS queue and loads transformed events to Snowflake. The events which are loaded to Snowflake are the ones which where indicated by the processed SQS message.
 
-`snowflake_*` inputs are meant to be obtained from outputs of 
-the [terraform-aws-snowflake-loader-setup](https://github.com/snowplow-devops/terraform-aws-snowflake-loader-setup/).
+The `snowflake_*` inputs are meant to be obtained from outputs of the [terraform-aws-snowflake-loader-setup](https://github.com/snowplow-devops/terraform-aws-snowflake-loader-setup/).
+
 Details on `snowflake` provider configuration described at the same [page](https://github.com/snowplow-devops/terraform-aws-snowflake-loader-setup/).
 
-`snowflake_region` and `snowflake_account` should be supplied directly. 
+The `snowflake_region` and `snowflake_account` should be supplied directly. 
 
 See example below:
 
@@ -50,14 +46,13 @@ provider "snowflake" {
 }
 
 module "snowflake_setup" {
-  source = "snowplow-devops/terraform-aws-snowflake-loader-setup"
+  source = "snowplow-devops/snowflake-loader-setup/aws"
 
   name               = "snowplow"
   stage_bucket_name  = "stage_bucket"
   account_id         = "000000000"
   sf_loader_password = "example_password"
 }
-
 
 module "s3_bucket" {
   source = "snowplow-devops/s3-bucket/aws"
@@ -78,7 +73,7 @@ resource "aws_key_pair" "sf_loader" {
 }
 
 module "snowflake_loader" {
-  source = "terraform-snowflake-loader"
+  source = "snowplow-devops/snowflake-loader-ec2/aws"
 
   name                                                   = var.name
   vpc_id                                                 = var.vpc_id
@@ -135,12 +130,9 @@ module "snowflake_loader" {
 | [aws_autoscaling_group.asg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group) | resource |
 | [aws_cloudwatch_log_group.log_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_iam_instance_profile.instance_profile](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
-| [aws_iam_policy.iam_policy_loader](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
-| [aws_iam_policy.snowflakedb_load_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
-| [aws_iam_role.iam_role_loader](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
-| [aws_iam_role.snowflakedb_load_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_policy.iam_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_role.iam_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy_attachment.policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_iam_role_policy_attachment.snowflake_role_policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_launch_configuration.lc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_configuration) | resource |
 | [aws_security_group.sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group_rule.egress_tcp_443](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
@@ -149,8 +141,6 @@ module "snowflake_loader" {
 | [aws_security_group_rule.ingress_tcp_22](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_ami.amazon_linux_2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
-| [aws_iam_policy_document.snowflake_load_assume_role_policy_storage_integration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
-| [aws_iam_policy_document.snowflake_load_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
 ## Inputs
@@ -222,7 +212,7 @@ module "snowflake_loader" {
 
 # Copyright and license
 
-The Terraform Snowflake Loader project is Copyright 2022-2022 Snowplow Analytics Ltd.
+The Terraform AWS Snowflake Loader on EC2 project is Copyright 2022-2022 Snowplow Analytics Ltd.
 
 Licensed under the [Apache License, Version 2.0][license] (the "License");
 you may not use this software except in compliance with the License.
@@ -245,7 +235,7 @@ limitations under the License.
 [license]: https://www.apache.org/licenses/LICENSE-2.0
 [license-image]: https://img.shields.io/badge/license-Apache--2-blue.svg?style=flat
 
-[registry]: https://registry.terraform.io/modules/snowplow-devops/aws-snowflake-loader-ec2/PROVIDER/latest
+[registry]: https://registry.terraform.io/modules/snowplow-devops/snowflake-loader-ec2/aws/latest
 [registry-image]: https://img.shields.io/static/v1?label=Terraform&message=Registry&color=7B42BC&logo=terraform
 
 [source]: https://github.com/snowplow/snowplow

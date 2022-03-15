@@ -18,14 +18,26 @@ locals {
     local.local_tags
   )
 
-  account_id                     = data.aws_caller_identity.current.account_id
-  snowflake_iam_load_policy_name = "${var.name}-snowflakedb-load-pol"
-  cloudwatch_log_group_name      = "/aws/ec2/${var.name}-snowflake-loader"
+  cloudwatch_log_group_name = "/aws/ec2/${var.name}"
 }
 
 data "aws_region" "current" {}
-
 data "aws_caller_identity" "current" {}
+
+module "telemetry" {
+  source  = "snowplow-devops/telemetry/snowplow"
+  version = "0.2.0"
+
+  count = var.telemetry_enabled ? 1 : 0
+
+  user_provided_id = var.user_provided_id
+  cloud            = "AWS"
+  region           = data.aws_region.current.name
+  app_name         = local.app_name
+  app_version      = local.app_version
+  module_name      = local.module_name
+  module_version   = local.module_version
+}
 
 data "aws_ami" "amazon_linux_2" {
   most_recent = true
@@ -61,9 +73,9 @@ resource "aws_cloudwatch_log_group" "log_group" {
 
 # --- IAM: Roles & Permissions
 
-resource "aws_iam_role" "iam_role_loader" {
-  name        = "${var.name}-snowflake-loader"
-  description = "Allows the Loader nodes to access required services"
+resource "aws_iam_role" "iam_role" {
+  name        = var.name
+  description = "Allows the Snowflake Loader nodes to access required services"
   tags        = local.tags
 
   assume_role_policy = <<EOF
@@ -82,8 +94,8 @@ EOF
   permissions_boundary = var.iam_permissions_boundary
 }
 
-resource "aws_iam_policy" "iam_policy_loader" {
-  name = "${var.name}-snowflake-loader"
+resource "aws_iam_policy" "iam_policy" {
+  name = var.name
   tags = local.tags
 
   policy = jsonencode({
@@ -145,19 +157,19 @@ resource "aws_iam_policy" "iam_policy_loader" {
 }
 
 resource "aws_iam_role_policy_attachment" "policy_attachment" {
-  role       = aws_iam_role.iam_role_loader.name
-  policy_arn = aws_iam_policy.iam_policy_loader.arn
+  role       = aws_iam_role.iam_role.name
+  policy_arn = aws_iam_policy.iam_policy.arn
 }
 
 resource "aws_iam_instance_profile" "instance_profile" {
-  name = "${var.name}-snowflake-loader"
-  role = aws_iam_role.iam_role_loader.name
+  name = var.name
+  role = aws_iam_role.iam_role.name
 }
 
 # --- EC2: Security Group Rules
 
 resource "aws_security_group" "sg" {
-  name   = "${var.name}-snowflake-loader"
+  name   = var.name
   vpc_id = var.vpc_id
   tags   = local.tags
 }
@@ -299,7 +311,7 @@ locals {
 }
 
 resource "aws_launch_configuration" "lc" {
-  name_prefix = "${var.name}-snowflake-loader"
+  name_prefix = "${var.name}-"
 
   image_id             = var.amazon_linux_2_ami_id == "" ? data.aws_ami.amazon_linux_2.id : var.amazon_linux_2_ami_id
   instance_type        = var.instance_type
@@ -331,7 +343,7 @@ module "tags" {
 }
 
 resource "aws_autoscaling_group" "asg" {
-  name = "${var.name}-snowflake-loader"
+  name = var.name
 
   max_size = 1
   min_size = 1
@@ -352,19 +364,4 @@ resource "aws_autoscaling_group" "asg" {
   }
 
   tags = module.tags.asg_tags
-}
-
-module "telemetry" {
-  source  = "snowplow-devops/telemetry/snowplow"
-  version = "0.2.0"
-
-  count = var.telemetry_enabled ? 1 : 0
-
-  user_provided_id = var.user_provided_id
-  cloud            = "AWS"
-  region           = data.aws_region.current.name
-  app_name         = local.app_name
-  app_version      = local.app_version
-  module_name      = local.module_name
-  module_version   = local.module_version
 }

@@ -325,6 +325,7 @@ variable "snowflake_account" {
   description = "Snowflake account"
   type        = string
 }
+
 variable "snowflake_aws_s3_transformed_stage_url" {
   description = "AWS bucket url of transformed stage"
   type        = string

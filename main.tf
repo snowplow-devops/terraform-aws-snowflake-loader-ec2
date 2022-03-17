@@ -14,8 +14,8 @@ locals {
   }
 
   tags = merge(
-  var.tags,
-  local.local_tags
+    var.tags,
+    local.local_tags
   )
 
   cloudwatch_log_group_name = "/aws/ec2/${var.name}"
@@ -99,51 +99,51 @@ resource "aws_iam_policy" "iam_policy" {
   tags = local.tags
 
   policy = jsonencode({
-    Version   = "2012-10-17",
+    Version = "2012-10-17",
     Statement = concat(
-    var.folder_monitoring_enabled ? [
-      {
-        Effect   = "Allow",
-        Action   = [
-          "s3:ListBucket",
-          "s3:PutObject"
-        ],
-        Resource = [
-          "arn:aws:s3:::${var.snowflake_aws_s3_stage_bucket_name}",
-          "arn:aws:s3:::${var.snowflake_aws_s3_stage_bucket_name}/*"
-        ]
-      }
-    ] : [],
-    [
-      {
-        Effect   = "Allow",
-        Action   = [
-          "sqs:DeleteMessage",
-          "sqs:GetQueueUrl",
-          "sqs:ListQueues",
-          "sqs:ChangeMessageVisibility",
-          "sqs:SendMessageBatch",
-          "sqs:ReceiveMessage",
-          "sqs:SendMessage",
-          "sqs:DeleteMessageBatch",
-          "sqs:ChangeMessageVisibilityBatch"
-        ],
-        Resource = [
-          "arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.sqs_queue_name}"
-        ]
-      },
-      {
-        Effect   = "Allow",
-        Action   = [
-          "logs:PutLogEvents",
-          "logs:CreateLogStream",
-          "logs:DescribeLogStreams"
-        ],
-        Resource = [
-          "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${local.cloudwatch_log_group_name}:*"
-        ]
-      }
-    ]
+      var.folder_monitoring_enabled ? [
+        {
+          Effect = "Allow",
+          Action = [
+            "s3:ListBucket",
+            "s3:PutObject"
+          ],
+          Resource = [
+            "arn:aws:s3:::${var.snowflake_aws_s3_stage_bucket_name}",
+            "arn:aws:s3:::${var.snowflake_aws_s3_stage_bucket_name}/*"
+          ]
+        }
+      ] : [],
+      [
+        {
+          Effect = "Allow",
+          Action = [
+            "sqs:DeleteMessage",
+            "sqs:GetQueueUrl",
+            "sqs:ListQueues",
+            "sqs:ChangeMessageVisibility",
+            "sqs:SendMessageBatch",
+            "sqs:ReceiveMessage",
+            "sqs:SendMessage",
+            "sqs:DeleteMessageBatch",
+            "sqs:ChangeMessageVisibilityBatch"
+          ],
+          Resource = [
+            "arn:aws:sqs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:${var.sqs_queue_name}"
+          ]
+        },
+        {
+          Effect = "Allow",
+          Action = [
+            "logs:PutLogEvents",
+            "logs:CreateLogStream",
+            "logs:DescribeLogStreams"
+          ],
+          Resource = [
+            "arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${local.cloudwatch_log_group_name}:*"
+          ]
+        }
+      ]
     )
   })
 }
@@ -220,34 +220,34 @@ locals {
   resolvers_raw = concat(var.default_iglu_resolvers, var.custom_iglu_resolvers)
 
   resolvers_open = [
-  for resolver in local.resolvers_raw : merge(
-  {
-    name           = resolver["name"],
-    priority       = resolver["priority"],
-    vendorPrefixes = resolver["vendor_prefixes"],
-    connection     = {
-      http = {
-        uri = resolver["uri"]
+    for resolver in local.resolvers_raw : merge(
+      {
+        name           = resolver["name"],
+        priority       = resolver["priority"],
+        vendorPrefixes = resolver["vendor_prefixes"],
+        connection = {
+          http = {
+            uri = resolver["uri"]
+          }
+        }
       }
-    }
-  }
-  ) if resolver["api_key"] == ""
+    ) if resolver["api_key"] == ""
   ]
 
   resolvers_closed = [
-  for resolver in local.resolvers_raw : merge(
-  {
-    name           = resolver["name"],
-    priority       = resolver["priority"],
-    vendorPrefixes = resolver["vendor_prefixes"],
-    connection     = {
-      http = {
-        uri    = resolver["uri"]
-        apikey = resolver["api_key"]
+    for resolver in local.resolvers_raw : merge(
+      {
+        name           = resolver["name"],
+        priority       = resolver["priority"],
+        vendorPrefixes = resolver["vendor_prefixes"],
+        connection = {
+          http = {
+            uri    = resolver["uri"]
+            apikey = resolver["api_key"]
+          }
+        }
       }
-    }
-  }
-  ) if resolver["api_key"] != ""
+    ) if resolver["api_key"] != ""
   ]
 
   resolvers = flatten([

@@ -30,7 +30,7 @@ Details on `snowflake` provider configuration described at the same [page](https
 
 The `snowflake_region` and `snowflake_account` should be supplied directly. 
 
-Duration settings such as `folder_monitoring_period` or `retry_period` should be given in [duration-doc].
+Duration settings such as `folder_monitoring_period` or `retry_period` should be given in the [documented duration format][duration-doc].
 
 See example below:
 
@@ -47,19 +47,30 @@ provider "snowflake" {
   private_key_path = "/path/to/private/key"
 }
 
-module "snowflake_setup" {
-  source = "snowplow-devops/snowflake-loader-setup/aws"
-
-  name               = "snowplow"
-  stage_bucket_name  =  module.s3_bucket.id
-  account_id         = "000000000"
-  sf_loader_password = "example_password"
-}
-
 module "s3_bucket" {
   source = "snowplow-devops/s3-bucket/aws"
 
   bucket_name = var.stage_bucket
+}
+
+module "snowflake_target" {
+   source = "snowplow-devops/target/snowflake"
+   
+   name               = "snowplow"
+   snowflake_password = "example_password"
+}
+
+module "snowflake_setup" {
+   source = "snowplow-devops/snowflake-loader-setup/aws"
+
+   name                  = "snowplow"
+   stage_bucket          = module.s3_bucket.id
+   aws_account_id        = "0000000000"
+   snowflake_database    = module.snowflake_target.snowflake_database
+   snowflake_event_table = module.snowflake_target.snowflake_event_table
+   snowflake_file_format = module.snowflake_target.snowflake_file_format
+   snowflake_schema      = module.snowflake_target.snowflake_schema
+   snowflake_user        = module.snowflake_target.snowflake_user
 }
 
 resource "aws_sqs_queue" "message_queue" {
@@ -133,25 +144,23 @@ resource "aws_iam_role_policy_attachment" "snowflake_role_policy_attachment" {
 module "snowflake_loader" {
   source = "snowplow-devops/snowflake-loader-ec2/aws"
 
-  name                                                   = var.name
-  vpc_id                                                 = var.vpc_id
-  subnet_ids                                             = var.subnet_ids
-  ssh_key_name                                           = aws_key_pair.sf_loader.key_name
-  ssh_ip_allowlist                                       = ["0.0.0.0/0"]
-  iam_permissions_boundary                               = var.iam_permissions_boundary
-  sqs_queue_name                                         = aws_sqs_queue.message_queue.name
-  snowflake_region                                       = var.snowflake_region
-  snowflake_account                                      = var.snowflake_account
-  snowflake_loader_user                                  = module.snowflake_setup.snowflake_loader_user
-  snowflake_password                                     = module.snowflake_setup.snowflake_password
-  snowflake_loader_role                                  = module.snowflake_setup.snowflake_loader_role
-  snowflake_warehouse                                    = module.snowflake_setup.snowflake_warehouse
-  snowflake_database                                     = module.snowflake_setup.snowflake_database
-  snowflake_schema                                       = module.snowflake_setup.snowflake_schema
-  snowflake_transformed_stage_name                       = module.snowflake_setup.snowflake_transformed_stage_name
-  snowflake_monitoring_stage_name                        = module.snowflake_setup.snowflake_monitoring_stage_name
-  snowflake_region                                       = module.snowflake_setup.snowflake_region
-  snowflake_account                                      = module.snowflake_setup.snowflake_account
+  name                             = var.name
+  vpc_id                           = var.vpc_id
+  subnet_ids                       = var.subnet_ids
+  ssh_key_name                     = aws_key_pair.sf_loader.key_name
+  ssh_ip_allowlist                 = ["0.0.0.0/0"]
+  iam_permissions_boundary         = var.iam_permissions_boundary
+  sqs_queue_name                   = aws_sqs_queue.message_queue.name
+  snowflake_region                 = var.snowflake_region
+  snowflake_account                = var.snowflake_account
+  snowflake_loader_user            = module.snowflake_target.snowflake_user
+  snowflake_password               = module.snowflake_target.snowflake_password
+  snowflake_loader_role            = module.snowflake_setup.snowflake_loader_role
+  snowflake_warehouse              = module.snowflake_setup.snowflake_warehouse
+  snowflake_database               = module.snowflake_target.snowflake_database
+  snowflake_schema                 = module.snowflake_target.snowflake_schema
+  snowflake_transformed_stage_name = module.snowflake_setup.snowflake_transformed_stage_name
+  snowflake_monitoring_stage_name  = module.snowflake_setup.snowflake_monitoring_stage_name
 }
 ```
 
@@ -190,6 +199,7 @@ module "snowflake_loader" {
 | [aws_security_group_rule.egress_tcp_443](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.egress_tcp_80](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.egress_udp_123](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
+| [aws_security_group_rule.egress_udp_statsd](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ingress_tcp_22](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_ami.amazon_linux_2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
@@ -226,14 +236,14 @@ module "snowflake_loader" {
 | <a name="input_folder_monitoring_since"></a> [folder\_monitoring\_since](#input\_folder\_monitoring\_since) | Specifies since when folder monitoring will check | `string` | `"14 days"` | no |
 | <a name="input_folder_monitoring_until"></a> [folder\_monitoring\_until](#input\_folder\_monitoring\_until) | Specifies until when folder monitoring will check | `string` | `"6 hours"` | no |
 | <a name="input_health_check_enabled"></a> [health\_check\_enabled](#input\_health\_check\_enabled) | Whether health check should be enabled or not | `bool` | `false` | no |
-| <a name="input_health_check_freq"></a> [health\_check\_freq](#input\_health\_check\_freq) | Frequency of health check | `string` | `""` | no |
-| <a name="input_health_check_timeout"></a> [health\_check\_timeout](#input\_health\_check\_timeout) | How long to wait for a response for health check query | `string` | `""` | no |
+| <a name="input_health_check_freq"></a> [health\_check\_freq](#input\_health\_check\_freq) | Frequency of health check | `string` | `"1 hour"` | no |
+| <a name="input_health_check_timeout"></a> [health\_check\_timeout](#input\_health\_check\_timeout) | How long to wait for a response for health check query | `string` | `"1 min"` | no |
 | <a name="input_iam_permissions_boundary"></a> [iam\_permissions\_boundary](#input\_iam\_permissions\_boundary) | The permissions boundary ARN to set on IAM roles created | `string` | `""` | no |
 | <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type) | The instance type to use | `string` | `"t3.micro"` | no |
 | <a name="input_max_error"></a> [max\_error](#input\_max\_error) | A table copy statement will skip an input file when the number of errors in it exceeds the specified number | `number` | `-1` | no |
-| <a name="input_retry_period"></a> [retry\_period](#input\_retry\_period) | How often batch of failed folders should be pulled into a discovery queue | `string` | `""` | no |
+| <a name="input_retry_period"></a> [retry\_period](#input\_retry\_period) | How often batch of failed folders should be pulled into a discovery queue | `string` | `"10 min"` | no |
 | <a name="input_retry_queue_enabled"></a> [retry\_queue\_enabled](#input\_retry\_queue\_enabled) | Whether retry queue should be enabled or not | `bool` | `false` | no |
-| <a name="input_retry_queue_interval"></a> [retry\_queue\_interval](#input\_retry\_queue\_interval) | Artificial pause after each failed folder being added to the queue | `string` | `""` | no |
+| <a name="input_retry_queue_interval"></a> [retry\_queue\_interval](#input\_retry\_queue\_interval) | Artificial pause after each failed folder being added to the queue | `string` | `"10 min"` | no |
 | <a name="input_retry_queue_max_attempt"></a> [retry\_queue\_max\_attempt](#input\_retry\_queue\_max\_attempt) | How many attempt to make for each folder | `number` | `-1` | no |
 | <a name="input_retry_queue_size"></a> [retry\_queue\_size](#input\_retry\_queue\_size) | How many failures should be kept in memory | `number` | `-1` | no |
 | <a name="input_sentry_dsn"></a> [sentry\_dsn](#input\_sentry\_dsn) | DSN for Sentry instance | `string` | `""` | no |

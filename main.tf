@@ -203,9 +203,10 @@ resource "aws_security_group_rule" "egress_udp_123" {
   security_group_id = aws_security_group.sg.id
 }
 
-# Needed for statd
-resource "aws_security_group_rule" "egress_udp_statd" {
-  count             = var.statsd_enabled ? 1 : 0
+# Needed for statsd
+resource "aws_security_group_rule" "egress_udp_statsd" {
+  count = var.statsd_enabled ? 1 : 0
+
   type              = "egress"
   from_port         = var.statsd_port
   to_port           = var.statsd_port

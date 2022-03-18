@@ -301,5 +301,5 @@ limitations under the License.
 [registry]: https://registry.terraform.io/modules/snowplow-devops/snowflake-loader-ec2/aws/latest
 [registry-image]: https://img.shields.io/static/v1?label=Terraform&message=Registry&color=7B42BC&logo=terraform
 
-[source]: https://github.com/snowplow/snowplow
-[source-image]: https://img.shields.io/static/v1?label=Snowplow&message=aws-snowflake-loader-ec2&color=0E9BA4&logo=GitHub
+[source]: https://github.com/snowplow/snowplow-rdb-loader
+[source-image]: https://img.shields.io/static/v1?label=Snowplow&message=Snowflake%20Loader&color=0E9BA4&logo=GitHub

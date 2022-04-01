@@ -1,9 +1,9 @@
 locals {
-  module_name    = "snowflake-loader"
+  module_name    = "rdb-loader-snowflake"
   module_version = "0.1.0"
 
-  app_name    = "snowplow-snowflake-loader"
-  app_version = "3.0.0-rc12"
+  app_name    = "rdb-loader-snowflake"
+  app_version = "3.0.0"
 
   local_tags = {
     Name           = var.name

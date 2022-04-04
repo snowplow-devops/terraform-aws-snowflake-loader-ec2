@@ -1,5 +1,5 @@
 locals {
-  module_name    = "rdb-loader-snowflake"
+  module_name    = "snowflake-loader-ec2"
   module_version = "0.1.0"
 
   app_name    = "rdb-loader-snowflake"

@@ -1,3 +1,7 @@
+Version 0.1.1 (2022-04-08)
+--------------------------
+Specify storage type as 'snowflake' in the config (#6)
+
 Version 0.1.0 (2022-04-04)
 --------------------------
 Initial release

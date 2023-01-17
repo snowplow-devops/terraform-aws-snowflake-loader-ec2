@@ -22,7 +22,7 @@ variable "subnet_ids" {
 variable "instance_type" {
   description = "The instance type to use"
   type        = string
-  default     = "t3.micro"
+  default     = "t3a.micro"
 }
 
 variable "associate_public_ip_address" {
@@ -64,6 +64,12 @@ variable "cloudwatch_logs_retention_days" {
   description = "The length of time in days to retain logs for"
   default     = 7
   type        = number
+}
+
+variable "java_opts" {
+  description = "Custom JAVA Options"
+  default     = "-Dorg.slf4j.simpleLogger.defaultLogLevel=info -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=75"
+  type        = string
 }
 
 # --- Configuration options

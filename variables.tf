@@ -85,12 +85,6 @@ variable "folder_monitoring_enabled" {
   type        = bool
 }
 
-variable "max_error" {
-  description = "A table copy statement will skip an input file when the number of errors in it exceeds the specified number"
-  default     = -1
-  type        = number
-}
-
 variable "sp_tracking_enabled" {
   description = "Whether Snowplow tracking should be activated or not"
   default     = false
@@ -119,6 +113,7 @@ variable "sentry_dsn" {
   description = "DSN for Sentry instance"
   default     = ""
   type        = string
+  sensitive   = true
 }
 
 variable "statsd_enabled" {
@@ -326,11 +321,6 @@ variable "snowflake_password" {
   sensitive   = true
 }
 
-variable "snowflake_loader_role" {
-  description = "Snowflake role for loading snowplow data"
-  type        = string
-}
-
 variable "snowflake_warehouse" {
   description = "Snowflake warehouse name"
   type        = string
@@ -346,17 +336,6 @@ variable "snowflake_schema" {
   type        = string
 }
 
-variable "snowflake_transformed_stage_name" {
-  description = "Name of transformed stage"
-  type        = string
-}
-
-variable "snowflake_monitoring_stage_name" {
-  description = "Name of monitoring stage"
-  type        = string
-  default     = ""
-}
-
 variable "snowflake_region" {
   description = "Snowflake region"
   type        = string
@@ -367,18 +346,19 @@ variable "snowflake_account" {
   type        = string
 }
 
-variable "snowflake_aws_s3_transformed_stage_url" {
-  description = "AWS bucket url of transformed stage"
+variable "snowflake_aws_s3_bucket_name" {
+  description = "AWS bucket name where data to load is stored"
   type        = string
 }
 
 variable "snowflake_aws_s3_folder_monitoring_stage_url" {
-  description = "AWS bucket url of folder monitoring stage"
+  description = "AWS bucket URL of folder monitoring stage - must be within 'snowflake_aws_s3_bucket_name' (NOTE: must be set if 'folder_monitoring_enabled' is true)"
   type        = string
   default     = ""
 }
 
-variable "snowflake_aws_s3_stage_bucket_name" {
-  description = "AWS stage bucket"
+variable "snowflake_aws_s3_folder_monitoring_transformer_output_stage_url" {
+  description = "AWS bucket URL of transformer output stage - must be within 'snowflake_aws_s3_bucket_name' (NOTE: must be set if 'folder_monitoring_enabled' is true)"
   type        = string
+  default     = ""
 }

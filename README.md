@@ -22,11 +22,36 @@ For details on what information is collected please see this module: https://git
 
 Snowflake Loader loads transformed events from S3 bucket to Snowflake. 
 
-Events are initially transformed to wide row format by transformer. After transformation is finished, transformer sends SQS message to given SQS queue. SQS message contains pieces of information related with transformed events. These are the S3 location of transformed events and the keys of the custom schemas found in the transformed events. Snowflake Loader gets messages from common SQS queue and loads transformed events to Snowflake. The events which are loaded to Snowflake are the ones which where indicated by the processed SQS message.
+Events are initially transformed to `widerow` format by transformer. After transformation is finished, transformer sends SQS message to given SQS queue. SQS message contains pieces of information related with transformed events. These are the S3 location of transformed events and the keys of the custom schemas found in the transformed events. Snowflake Loader gets messages from common SQS queue and loads transformed events to Snowflake. The events which are loaded to Snowflake are the ones which where indicated by the processed SQS message.
 
-The `snowflake_*` inputs are meant to be obtained from outputs of the [terraform-aws-snowflake-loader-setup](https://github.com/snowplow-devops/terraform-aws-snowflake-loader-setup/).
+To obtain the `snowflake_*` inputs you can execute the following SQL.  You will need access to both `SYSADMIN` and `SECURITYADMIN` level roles to action this:
 
-Details on `snowflake` provider configuration described at the same [page](https://github.com/snowplow-devops/terraform-aws-snowflake-loader-setup/).
+```sql
+-- 1. Create database
+CREATE DATABASE IF NOT EXISTS ${snowflake_database};
+
+-- 2. Create schema within database
+CREATE SCHEMA IF NOT EXISTS ${snowflake_database}.${snowflake_schema};
+
+-- 3. Create a warehouse which will be used to load data
+CREATE WAREHOUSE IF NOT EXISTS ${snowflake_warehouse} WITH WAREHOUSE_SIZE = 'XSMALL' WAREHOUSE_TYPE = 'STANDARD' AUTO_SUSPEND = 60 AUTO_RESUME = TRUE;
+
+-- 4. Create a role that will be used for loading data
+CREATE ROLE IF NOT EXISTS ${snowflake_loader_role};
+GRANT USAGE, OPERATE ON WAREHOUSE ${snowflake_warehouse} TO ROLE ${snowflake_loader_role};
+GRANT USAGE ON DATABASE ${snowflake_database} TO ROLE ${snowflake_loader_role};
+GRANT ALL ON SCHEMA ${snowflake_database}.${snowflake_schema} TO ROLE ${snowflake_loader_role};
+
+-- 5. Create a user that can be used for loading data
+CREATE USER IF NOT EXISTS ${snowflake_loader_user} PASSWORD='${snowflake_password}'
+  MUST_CHANGE_PASSWORD = FALSE
+  DEFAULT_ROLE = ${snowflake_loader_role}
+  EMAIL = 'loader@acme.com';
+GRANT ROLE ${snowflake_loader_role} TO USER ${snowflake_loader_user};
+
+-- 6. (Optional) Grant this role to SYSADMIN to make debugging easier from admin-users
+GRANT ROLE ${snowflake_loader_role} TO ROLE SYSADMIN;
+```
 
 The `snowflake_region` and `snowflake_account` should be supplied directly. 
 
@@ -35,132 +60,52 @@ Duration settings such as `folder_monitoring_period` or `retry_period` should be
 See example below:
 
 ```hcl
-provider "aws" {
-  region = "eu-central-1"
-}
-
-provider "snowflake" {
-  username         = "service_user"
-  account          = var.snowflake_account
-  region           = var.snowflake_region
-  role             = "ACCOUNTADMIN"
-  private_key_path = "/path/to/private/key"
-}
-
-module "s3_bucket" {
+# Note: This should be the same bucket that is used by the transformer to produce data to load
+module "s3_pipeline_bucket" {
   source = "snowplow-devops/s3-bucket/aws"
 
-  bucket_name = var.stage_bucket
+  bucket_name = "your-bucket-name"
 }
 
-module "snowflake_target" {
-   source = "snowplow-devops/target/snowflake"
-   
-   name               = "snowplow"
-   snowflake_password = "example_password"
-}
-
-module "snowflake_setup" {
-   source = "snowplow-devops/snowflake-loader-setup/aws"
-
-   name                  = "snowplow"
-   stage_bucket          = module.s3_bucket.id
-   aws_account_id        = "0000000000"
-   snowflake_database    = module.snowflake_target.snowflake_database
-   snowflake_event_table = module.snowflake_target.snowflake_event_table
-   snowflake_file_format = module.snowflake_target.snowflake_file_format
-   snowflake_schema      = module.snowflake_target.snowflake_schema
-   snowflake_user        = module.snowflake_target.snowflake_user
-}
-
-resource "aws_sqs_queue" "message_queue" {
+# Note: This should be the same queue that is passed to the transformer to produce data to load
+resource "aws_sqs_queue" "sf_message_queue" {
   content_based_deduplication = true
   kms_master_key_id           = "alias/aws/sqs"
-  name                        = "${var.queue_name}.fifo"
+  name                        = "sf-loader.fifo"
   fifo_queue                  = true
 }
 
-resource "aws_key_pair" "sf_loader" {
-  key_name   = "sf_loader_key_name"
-  public_key = var.ssh_public_key
-}
-
-# --- Storage Integration
-
-data "aws_iam_policy_document" "snowflake_load_policy" {
-  statement {
-    actions = [
-      "s3:GetObject",
-      "s3:GetObjectVersion",
-      "s3:ListBucket",
-      "s3:GetBucketLocation",
-    ]
-    resources = [
-      "arn:aws:s3:::${module.s3_bucket.id}",
-      "arn:aws:s3:::${module.s3_bucket.id}/*"
-    ]
-  }
-}
-
-data "aws_iam_policy_document" "snowflake_load_assume_role_policy_storage_integration" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "AWS"
-      identifiers = [module.snowflake_setup.aws_iam_storage_integration_user_arn]
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "sts:ExternalId"
-
-      values = [module.snowflake_setup.aws_storage_external_id]
-    }
-  }
-}
-
-resource "aws_iam_policy" "snowflakedb_load_policy" {
-  name        = "${var.prefix}-snowflake-loader-pol"
-  tags        = var.tags
-  description = "Access policy for the Snowflake loading role"
-  policy      = data.aws_iam_policy_document.snowflake_load_policy.json
-}
-
-resource "aws_iam_role" "snowflakedb_load_role" {
-  name                 = module.snowflake_setup.aws_iam_storage_integration_role_name
-  tags                 = var.tags
-  description          = "Role for the Snowplow Snowflake Loader to assume"
-  max_session_duration = 43200
-  assume_role_policy   = data.aws_iam_policy_document.snowflake_load_assume_role_policy_storage_integration.json
-  permissions_boundary = var.iam_permissions_boundary
-}
-
-resource "aws_iam_role_policy_attachment" "snowflake_role_policy_attachment" {
-  role       = aws_iam_role.snowflakedb_load_role.name
-  policy_arn = aws_iam_policy.snowflakedb_load_policy.arn
-}
-
-module "snowflake_loader" {
+module "sf_loader" {
   source = "snowplow-devops/snowflake-loader-ec2/aws"
 
-  name                             = var.name
-  vpc_id                           = var.vpc_id
-  subnet_ids                       = var.subnet_ids
-  ssh_key_name                     = aws_key_pair.sf_loader.key_name
-  ssh_ip_allowlist                 = ["0.0.0.0/0"]
-  iam_permissions_boundary         = var.iam_permissions_boundary
-  sqs_queue_name                   = aws_sqs_queue.message_queue.name
-  snowflake_region                 = var.snowflake_region
-  snowflake_account                = var.snowflake_account
-  snowflake_loader_user            = module.snowflake_target.snowflake_user
-  snowflake_password               = module.snowflake_target.snowflake_password
-  snowflake_loader_role            = module.snowflake_setup.snowflake_loader_role
-  snowflake_warehouse              = module.snowflake_setup.snowflake_warehouse
-  snowflake_database               = module.snowflake_target.snowflake_database
-  snowflake_schema                 = module.snowflake_target.snowflake_schema
-  snowflake_transformed_stage_name = module.snowflake_setup.snowflake_transformed_stage_name
-  snowflake_monitoring_stage_name  = module.snowflake_setup.snowflake_monitoring_stage_name
+  name       = "sf-loader-server"
+  vpc_id     = var.vpc_id
+  subnet_ids = var.subnet_ids
+
+  sqs_queue_name = aws_sqs_queue.sf_message_queue.name
+
+  snowflake_loader_user        = "<USER>"
+  snowflake_password           = "<PASSWORD>"
+  snowflake_warehouse          = "<WAREHOUSE>"
+  snowflake_database           = "<DATABASE>"
+  snowflake_schema             = "<SCHEMA>"
+  snowflake_region             = "<REGION>"
+  snowflake_account            = "<ACCOUNT>"
+  snowflake_aws_s3_bucket_name = module.s3_pipeline_bucket.id
+
+  ssh_key_name     = "your-key-name"
+  ssh_ip_allowlist = ["0.0.0.0/0"]
+
+  # Linking in the custom Iglu Server here
+  custom_iglu_resolvers = [
+    {
+      name            = "Iglu Server"
+      priority        = 0
+      uri             = "http://your-iglu-server-endpoint/api"
+      api_key         = var.iglu_super_api_key
+      vendor_prefixes = []
+    }
+  ]
 }
 ```
 
@@ -169,41 +114,42 @@ module "snowflake_loader" {
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 3.45.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 3.72.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 3.45.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 3.72.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_instance_type_metrics"></a> [instance\_type\_metrics](#module\_instance\_type\_metrics) | snowplow-devops/ec2-instance-type-metrics/aws | 0.1.2 |
-| <a name="module_tags"></a> [tags](#module\_tags) | snowplow-devops/tags/aws | 0.2.0 |
-| <a name="module_telemetry"></a> [telemetry](#module\_telemetry) | snowplow-devops/telemetry/snowplow | 0.3.0 |
+| <a name="module_service"></a> [service](#module\_service) | snowplow-devops/service-ec2/aws | 0.1.1 |
+| <a name="module_telemetry"></a> [telemetry](#module\_telemetry) | snowplow-devops/telemetry/snowplow | 0.4.0 |
 
 ## Resources
 
 | Name | Type |
 |------|------|
-| [aws_autoscaling_group.asg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group) | resource |
 | [aws_cloudwatch_log_group.log_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group) | resource |
 | [aws_iam_instance_profile.instance_profile](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
 | [aws_iam_policy.iam_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_policy.sts_credentials_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_iam_role.iam_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role.sts_credentials_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy_attachment.policy_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
-| [aws_launch_configuration.lc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_configuration) | resource |
+| [aws_iam_role_policy_attachment.sts_credentials_policy_attachement](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_security_group.sg](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group) | resource |
 | [aws_security_group_rule.egress_tcp_443](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.egress_tcp_80](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.egress_udp_123](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.egress_udp_statsd](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
 | [aws_security_group_rule.ingress_tcp_22](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule) | resource |
-| [aws_ami.amazon_linux_2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ami) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
+| [aws_iam_policy_document.sts_credentials_role](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_region.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region) | data source |
 
 ## Inputs
@@ -212,15 +158,12 @@ module "snowflake_loader" {
 |------|-------------|------|---------|:--------:|
 | <a name="input_name"></a> [name](#input\_name) | A name which will be prepended to the resources created | `string` | n/a | yes |
 | <a name="input_snowflake_account"></a> [snowflake\_account](#input\_snowflake\_account) | Snowflake account | `string` | n/a | yes |
-| <a name="input_snowflake_aws_s3_stage_bucket_name"></a> [snowflake\_aws\_s3\_stage\_bucket\_name](#input\_snowflake\_aws\_s3\_stage\_bucket\_name) | AWS stage bucket | `string` | n/a | yes |
-| <a name="input_snowflake_aws_s3_transformed_stage_url"></a> [snowflake\_aws\_s3\_transformed\_stage\_url](#input\_snowflake\_aws\_s3\_transformed\_stage\_url) | AWS bucket url of transformed stage | `string` | n/a | yes |
+| <a name="input_snowflake_aws_s3_bucket_name"></a> [snowflake\_aws\_s3\_bucket\_name](#input\_snowflake\_aws\_s3\_bucket\_name) | AWS bucket name where data to load is stored | `string` | n/a | yes |
 | <a name="input_snowflake_database"></a> [snowflake\_database](#input\_snowflake\_database) | Snowflake database name | `string` | n/a | yes |
-| <a name="input_snowflake_loader_role"></a> [snowflake\_loader\_role](#input\_snowflake\_loader\_role) | Snowflake role for loading snowplow data | `string` | n/a | yes |
 | <a name="input_snowflake_loader_user"></a> [snowflake\_loader\_user](#input\_snowflake\_loader\_user) | Snowflake username used by loader to perform loading | `string` | n/a | yes |
 | <a name="input_snowflake_password"></a> [snowflake\_password](#input\_snowflake\_password) | Password for snowflake\_loader\_user used by loader to perform loading | `string` | n/a | yes |
 | <a name="input_snowflake_region"></a> [snowflake\_region](#input\_snowflake\_region) | Snowflake region | `string` | n/a | yes |
 | <a name="input_snowflake_schema"></a> [snowflake\_schema](#input\_snowflake\_schema) | Snowflake schema name | `string` | n/a | yes |
-| <a name="input_snowflake_transformed_stage_name"></a> [snowflake\_transformed\_stage\_name](#input\_snowflake\_transformed\_stage\_name) | Name of transformed stage | `string` | n/a | yes |
 | <a name="input_snowflake_warehouse"></a> [snowflake\_warehouse](#input\_snowflake\_warehouse) | Snowflake warehouse name | `string` | n/a | yes |
 | <a name="input_sqs_queue_name"></a> [sqs\_queue\_name](#input\_sqs\_queue\_name) | SQS queue name | `string` | n/a | yes |
 | <a name="input_ssh_key_name"></a> [ssh\_key\_name](#input\_ssh\_key\_name) | The name of the SSH key-pair to attach to all EC2 nodes deployed | `string` | n/a | yes |
@@ -242,7 +185,6 @@ module "snowflake_loader" {
 | <a name="input_iam_permissions_boundary"></a> [iam\_permissions\_boundary](#input\_iam\_permissions\_boundary) | The permissions boundary ARN to set on IAM roles created | `string` | `""` | no |
 | <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type) | The instance type to use | `string` | `"t3a.micro"` | no |
 | <a name="input_java_opts"></a> [java\_opts](#input\_java\_opts) | Custom JAVA Options | `string` | `"-Dorg.slf4j.simpleLogger.defaultLogLevel=info -XX:MinRAMPercentage=50 -XX:MaxRAMPercentage=75"` | no |
-| <a name="input_max_error"></a> [max\_error](#input\_max\_error) | A table copy statement will skip an input file when the number of errors in it exceeds the specified number | `number` | `-1` | no |
 | <a name="input_retry_period"></a> [retry\_period](#input\_retry\_period) | How often batch of failed folders should be pulled into a discovery queue | `string` | `"10 min"` | no |
 | <a name="input_retry_queue_enabled"></a> [retry\_queue\_enabled](#input\_retry\_queue\_enabled) | Whether retry queue should be enabled or not | `bool` | `false` | no |
 | <a name="input_retry_queue_interval"></a> [retry\_queue\_interval](#input\_retry\_queue\_interval) | Artificial pause after each failed folder being added to the queue | `string` | `"10 min"` | no |
@@ -250,8 +192,8 @@ module "snowflake_loader" {
 | <a name="input_retry_queue_size"></a> [retry\_queue\_size](#input\_retry\_queue\_size) | How many failures should be kept in memory | `number` | `-1` | no |
 | <a name="input_sentry_dsn"></a> [sentry\_dsn](#input\_sentry\_dsn) | DSN for Sentry instance | `string` | `""` | no |
 | <a name="input_sentry_enabled"></a> [sentry\_enabled](#input\_sentry\_enabled) | Whether Sentry should be enabled or not | `bool` | `false` | no |
-| <a name="input_snowflake_aws_s3_folder_monitoring_stage_url"></a> [snowflake\_aws\_s3\_folder\_monitoring\_stage\_url](#input\_snowflake\_aws\_s3\_folder\_monitoring\_stage\_url) | AWS bucket url of folder monitoring stage | `string` | `""` | no |
-| <a name="input_snowflake_monitoring_stage_name"></a> [snowflake\_monitoring\_stage\_name](#input\_snowflake\_monitoring\_stage\_name) | Name of monitoring stage | `string` | `""` | no |
+| <a name="input_snowflake_aws_s3_folder_monitoring_stage_url"></a> [snowflake\_aws\_s3\_folder\_monitoring\_stage\_url](#input\_snowflake\_aws\_s3\_folder\_monitoring\_stage\_url) | AWS bucket URL of folder monitoring stage - must be within 'snowflake\_aws\_s3\_bucket\_name' (NOTE: must be set if 'folder\_monitoring\_enabled' is true) | `string` | `""` | no |
+| <a name="input_snowflake_aws_s3_folder_monitoring_transformer_output_stage_url"></a> [snowflake\_aws\_s3\_folder\_monitoring\_transformer\_output\_stage\_url](#input\_snowflake\_aws\_s3\_folder\_monitoring\_transformer\_output\_stage\_url) | AWS bucket URL of transformer output stage - must be within 'snowflake\_aws\_s3\_bucket\_name' (NOTE: must be set if 'folder\_monitoring\_enabled' is true) | `string` | `""` | no |
 | <a name="input_sp_tracking_app_id"></a> [sp\_tracking\_app\_id](#input\_sp\_tracking\_app\_id) | App id for Snowplow tracking | `string` | `""` | no |
 | <a name="input_sp_tracking_collector_url"></a> [sp\_tracking\_collector\_url](#input\_sp\_tracking\_collector\_url) | Collector URL for Snowplow tracking | `string` | `""` | no |
 | <a name="input_sp_tracking_enabled"></a> [sp\_tracking\_enabled](#input\_sp\_tracking\_enabled) | Whether Snowplow tracking should be activated or not | `bool` | `false` | no |
@@ -288,8 +230,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 [duration-doc]: https://github.com/lightbend/config/blob/main/HOCON.md#duration-format
-[snowflake-service-user-tutorial]: https://quickstarts.snowflake.com/guide/terraforming_snowflake/index.html?index=..%2F..index#2
-[snowflake-env-vars]: https://quickstarts.snowflake.com/guide/terraforming_snowflake/index.html?index=..%2F..index#3
 
 [release]: https://github.com/snowplow-devops/terraform-aws-snowflake-loader-ec2/releases/latest
 [release-image]: https://img.shields.io/github/v/release/snowplow-devops/terraform-aws-snowflake-loader-ec2

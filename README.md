@@ -75,6 +75,37 @@ resource "aws_sqs_queue" "sf_message_queue" {
   fifo_queue                  = true
 }
 
+module "transformer_wrj" {
+  source  = "snowplow-devops/transformer-kinesis-ec2/aws"
+
+  name       = "transformer-server-wrj"
+  vpc_id     = var.vpc_id
+  subnet_ids = var.subnet_ids
+
+  stream_name             = module.enriched_stream.name
+  s3_bucket_name          = module.s3_pipeline_bucket.id
+  s3_bucket_object_prefix = "transformed/good/widerow/json"
+  window_period_min       = 1
+  sqs_queue_name          = aws_sqs_queue.sf_message_queue.name
+
+  transformation_type = "widerow"
+  widerow_file_format = "json"
+
+  ssh_key_name     = "your-key-name"
+  ssh_ip_allowlist = ["0.0.0.0/0"]
+
+  # Linking in the custom Iglu Server here
+  custom_iglu_resolvers = [
+    {
+      name            = "Iglu Server"
+      priority        = 0
+      uri             = "http://your-iglu-server-endpoint/api"
+      api_key         = var.iglu_super_api_key
+      vendor_prefixes = []
+    }
+  ]
+}
+
 module "sf_loader" {
   source = "snowplow-devops/snowflake-loader-ec2/aws"
 

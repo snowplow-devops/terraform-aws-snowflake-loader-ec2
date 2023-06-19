@@ -3,7 +3,7 @@ locals {
   module_version = "0.2.2"
 
   app_name    = "rdb-loader-snowflake"
-  app_version = "5.3.2"
+  app_version = "5.6.0"
 
   local_tags = {
     Name           = var.name

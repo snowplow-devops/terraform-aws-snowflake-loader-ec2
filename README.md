@@ -22,40 +22,15 @@ For details on what information is collected please see this module: https://git
 
 Snowflake Loader loads transformed events from S3 bucket to Snowflake. 
 
-Events are initially transformed to `widerow` format by transformer. After transformation is finished, transformer sends SQS message to given SQS queue. SQS message contains pieces of information related with transformed events. These are the S3 location of transformed events and the keys of the custom schemas found in the transformed events. Snowflake Loader gets messages from common SQS queue and loads transformed events to Snowflake. The events which are loaded to Snowflake are the ones which where indicated by the processed SQS message.
+For more information on how it works, see [this overview](https://docs.snowplow.io/docs/storing-querying/loading-process/?warehouse=snowflake&cloud=aws-micro-batching).
 
-To obtain the `snowflake_*` inputs you can execute the following SQL.  You will need access to both `SYSADMIN` and `SECURITYADMIN` level roles to action this:
-
-```sql
--- 1. Create database
-CREATE DATABASE IF NOT EXISTS ${snowflake_database};
-
--- 2. Create schema within database
-CREATE SCHEMA IF NOT EXISTS ${snowflake_database}.${snowflake_schema};
-
--- 3. Create a warehouse which will be used to load data
-CREATE WAREHOUSE IF NOT EXISTS ${snowflake_warehouse} WITH WAREHOUSE_SIZE = 'XSMALL' WAREHOUSE_TYPE = 'STANDARD' AUTO_SUSPEND = 60 AUTO_RESUME = TRUE;
-
--- 4. Create a role that will be used for loading data
-CREATE ROLE IF NOT EXISTS ${snowflake_loader_role};
-GRANT USAGE, OPERATE ON WAREHOUSE ${snowflake_warehouse} TO ROLE ${snowflake_loader_role};
-GRANT USAGE ON DATABASE ${snowflake_database} TO ROLE ${snowflake_loader_role};
-GRANT ALL ON SCHEMA ${snowflake_database}.${snowflake_schema} TO ROLE ${snowflake_loader_role};
-
--- 5. Create a user that can be used for loading data
-CREATE USER IF NOT EXISTS ${snowflake_loader_user} PASSWORD='${snowflake_password}'
-  MUST_CHANGE_PASSWORD = FALSE
-  DEFAULT_ROLE = ${snowflake_loader_role}
-  EMAIL = 'loader@acme.com';
-GRANT ROLE ${snowflake_loader_role} TO USER ${snowflake_loader_user};
-
--- 6. (Optional) Grant this role to SYSADMIN to make debugging easier from admin-users
-GRANT ROLE ${snowflake_loader_role} TO ROLE SYSADMIN;
-```
-
-The `snowflake_region` and `snowflake_account` should be supplied directly. 
+To configure Snowflake, please refer to the [quick start guide](https://docs.snowplow.io/docs/getting-started-on-snowplow-open-source/quick-start/?warehouse=snowflake#prepare-the-destination).
 
 Duration settings such as `folder_monitoring_period` or `retry_period` should be given in the [documented duration format][duration-doc].
+
+## Example
+
+Normally, this module would be used as part of our [quick start guide](https://docs.snowplow.io/docs/getting-started-on-snowplow-open-source/quick-start/). However, you can also use it standalone for a custom setup.
 
 See example below:
 

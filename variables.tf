@@ -346,6 +346,12 @@ variable "snowflake_account" {
   type        = string
 }
 
+variable "snowflake_role" {
+  description = "Snowflake role"
+  type        = string
+  default     = null
+}
+
 variable "snowflake_aws_s3_bucket_name" {
   description = "AWS bucket name where data to load is stored"
   type        = string

@@ -314,6 +314,7 @@ locals {
     sf_password                          = var.snowflake_password
     sf_region                            = var.snowflake_region
     sf_account                           = var.snowflake_account
+    sf_role                              = var.snowflake_role
     sf_wh_name                           = var.snowflake_warehouse
     sf_db_name                           = var.snowflake_database
     sf_schema                            = var.snowflake_schema

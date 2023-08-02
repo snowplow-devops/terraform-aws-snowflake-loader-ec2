@@ -312,6 +312,7 @@ locals {
     message_queue                        = var.sqs_queue_name
     sf_username                          = var.snowflake_loader_user
     sf_password                          = var.snowflake_password
+    sf_password_parameter_name           = var.snowflake_password_parameter_name
     sf_region                            = var.snowflake_region
     sf_account                           = var.snowflake_account
     sf_wh_name                           = var.snowflake_warehouse

@@ -17,8 +17,18 @@
     "snowflakeRegion": "${sf_region}",
     # DB user with permissions to load data
     "username": "${sf_username}",
+%{ if sf_password_parameter_name != null ~}
+    # DB password from parameter store
+    "password": {
+        "ec2ParameterStore": {
+          "parameterName": "${sf_password_parameter_name}"
+        }
+    },
+%{ else ~}
     # DB password
     "password": "${sf_password}",
+%{ endif ~}
+
     # Snowflake account
     "account": "${sf_account}",
     # A warehouse to use for loading

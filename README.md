@@ -97,6 +97,7 @@ module "sf_loader" {
   snowflake_schema             = "<SCHEMA>"
   snowflake_region             = "<REGION>"
   snowflake_account            = "<ACCOUNT>"
+  snowflake_role               = "<ROLE>"
   snowflake_aws_s3_bucket_name = module.s3_pipeline_bucket.id
 
   ssh_key_name     = "your-key-name"
@@ -168,6 +169,7 @@ module "sf_loader" {
 | <a name="input_snowflake_database"></a> [snowflake\_database](#input\_snowflake\_database) | Snowflake database name | `string` | n/a | yes |
 | <a name="input_snowflake_loader_user"></a> [snowflake\_loader\_user](#input\_snowflake\_loader\_user) | Snowflake username used by loader to perform loading | `string` | n/a | yes |
 | <a name="input_snowflake_password"></a> [snowflake\_password](#input\_snowflake\_password) | Password for snowflake\_loader\_user used by loader to perform loading | `string` | n/a | yes |
+| <a name="input_snowflake_role"></a> [snowflake\_role](#input\_snowflake\_role) | Snowflake role | `string` | null | no |
 | <a name="input_snowflake_region"></a> [snowflake\_region](#input\_snowflake\_region) | Snowflake region | `string` | n/a | yes |
 | <a name="input_snowflake_schema"></a> [snowflake\_schema](#input\_snowflake\_schema) | Snowflake schema name | `string` | n/a | yes |
 | <a name="input_snowflake_warehouse"></a> [snowflake\_warehouse](#input\_snowflake\_warehouse) | Snowflake warehouse name | `string` | n/a | yes |

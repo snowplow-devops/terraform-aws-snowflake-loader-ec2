@@ -322,16 +322,16 @@ variable "snowflake_password" {
   sensitive   = true
 }
 
-variable "snowflake_password_parameter_name" {
+variable "snowflake_password_from_parameter_store_name" {
   description = <<DESC
 AWS SSM parameter name used to store the password for snowflake_loader_user used by loader to perform loading.
-If a password is also set it will be ignored.
+This takes precedence over snowflake_password.
 DESC
   type        = string
   default     = null
 
   validation {
-    condition     = can(regex("^([a-zA-Z0-9_.-]*|/[a-zA-Z0-9_.-]*(/[a-zA-Z0-9_.-])*)$", var.snowflake_password_parameter_name))
+    condition     = var.snowflake_password_from_parameter_store_name == null || can(regex("^([a-zA-Z0-9_.-]*|/[a-zA-Z0-9_.-]+(?:/[a-zA-Z0-9_.-]+)*)$", var.snowflake_password_from_parameter_store_name))
     error_message = "Invalid SSM parameter name formant."
   }
 }

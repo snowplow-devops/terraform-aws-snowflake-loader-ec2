@@ -17,11 +17,11 @@
     "snowflakeRegion": "${sf_region}",
     # DB user with permissions to load data
     "username": "${sf_username}",
-%{ if sf_password_parameter_name != null ~}
+%{ if sf_password_from_parameter_store_name != null ~}
     # DB password from parameter store
     "password": {
         "ec2ParameterStore": {
-          "parameterName": "${sf_password_parameter_name}"
+          "parameterName": "${sf_password_from_parameter_store_name}"
         }
     },
 %{ else ~}

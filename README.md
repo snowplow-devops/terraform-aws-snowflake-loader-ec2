@@ -168,7 +168,7 @@ module "sf_loader" {
 | <a name="input_snowflake_database"></a> [snowflake\_database](#input\_snowflake\_database) | Snowflake database name | `string` | n/a | yes |
 | <a name="input_snowflake_loader_user"></a> [snowflake\_loader\_user](#input\_snowflake\_loader\_user) | Snowflake username used by loader to perform loading | `string` | n/a | yes |
 | <a name="input_snowflake_password"></a> [snowflake\_password](#input\_snowflake\_password) | Password for snowflake\_loader\_user used by loader to perform loading | `string` | `""` | no |
-| <a name="input_snowflake_password_parameter_name"></a> [snowflake\_password\_parameter\_name](#input\_snowflake\_password\_parameter\_name) | AWS SSM parameter store name for the password for snowflake\_loader\_user used by loader to perform loading | `string` | null | no |
+| <a name="input_snowflake_password_from_parameter_store_name"></a> [snowflake\_password\_form\_parameter\_store\_name](#input\_snowflake\_password\_from\_parameter\_store\_name) | AWS SSM parameter store name for the password for snowflake\_loader\_user used by loader to perform loading | `string` | null | no |
 | <a name="input_snowflake_region"></a> [snowflake\_region](#input\_snowflake\_region) | Snowflake region | `string` | n/a | yes |
 | <a name="input_snowflake_schema"></a> [snowflake\_schema](#input\_snowflake\_schema) | Snowflake schema name | `string` | n/a | yes |
 | <a name="input_snowflake_warehouse"></a> [snowflake\_warehouse](#input\_snowflake\_warehouse) | Snowflake warehouse name | `string` | n/a | yes |

@@ -19,6 +19,17 @@ locals {
   )
 
   cloudwatch_log_group_name = "/aws/ec2/${var.name}"
+
+  # Only add a policy statement for SSM parameter store if snowflake_password_from_parameter_store_name has been set
+  optional_ssm_parameter_store_policy_statement = var.snowflake_password_from_parameter_store_name != null ? [{
+      Effect = "Allow",
+      Action = [
+        "ssm:GetParameter"
+      ]
+      Resource = [
+        "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${trimprefix(var.snowflake_password_from_parameter_store_name, "/")}"
+      ]
+    }] : []
 }
 
 data "aws_region" "current" {}
@@ -79,7 +90,7 @@ resource "aws_iam_policy" "iam_policy" {
 
   policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [
+    Statement = concat([
       {
         Effect = "Allow",
         Action = [
@@ -133,7 +144,7 @@ resource "aws_iam_policy" "iam_policy" {
           aws_iam_role.sts_credentials_role.arn
         ]
       }
-    ]
+    ], local.optional_ssm_parameter_store_policy_statement)
   })
 }
 
@@ -308,49 +319,50 @@ locals {
   })
 
   config = templatefile("${path.module}/templates/config.json.tmpl", {
-    region                               = data.aws_region.current.name
-    message_queue                        = var.sqs_queue_name
-    sf_username                          = var.snowflake_loader_user
-    sf_password                          = var.snowflake_password
-    sf_region                            = var.snowflake_region
-    sf_account                           = var.snowflake_account
-    sf_wh_name                           = var.snowflake_warehouse
-    sf_db_name                           = var.snowflake_database
-    sf_schema                            = var.snowflake_schema
-    temp_credentials_role_arn            = aws_iam_role.sts_credentials_role.arn
-    sp_tracking_enabled                  = var.sp_tracking_enabled
-    sp_tracking_app_id                   = var.sp_tracking_app_id
-    sp_tracking_collector_url            = var.sp_tracking_collector_url
-    sentry_enabled                       = var.sentry_enabled
-    sentry_dsn                           = var.sentry_dsn
-    statsd_enabled                       = var.statsd_enabled
-    statsd_host                          = var.statsd_host
-    statsd_port                          = var.statsd_port
-    stdout_metrics_enabled               = var.stdout_metrics_enabled
-    webhook_enabled                      = var.webhook_enabled
-    webhook_collector                    = var.webhook_collector
-    folder_monitoring_enabled            = var.folder_monitoring_enabled
-    folder_monitoring_staging            = var.snowflake_aws_s3_folder_monitoring_stage_url
-    folder_monitoring_transformer_output = var.snowflake_aws_s3_folder_monitoring_transformer_output_stage_url
-    folder_monitoring_period             = var.folder_monitoring_period
-    folder_monitoring_since              = var.folder_monitoring_since
-    folder_monitoring_until              = var.folder_monitoring_until
-    health_check_enabled                 = var.health_check_enabled
-    health_check_freq                    = var.health_check_freq
-    health_check_timeout                 = var.health_check_timeout
-    retry_queue_enabled                  = var.retry_queue_enabled
-    retry_period                         = var.retry_period
-    retry_queue_size                     = var.retry_queue_size
-    retry_queue_max_attempt              = var.retry_queue_max_attempt
-    retry_queue_interval                 = var.retry_queue_interval
-    telemetry_disable                    = !var.telemetry_enabled
-    telemetry_collector_uri              = join("", module.telemetry.*.collector_uri)
-    telemetry_collector_port             = 443
-    telemetry_secure                     = true
-    telemetry_user_provided_id           = var.user_provided_id
-    telemetry_auto_gen_id                = join("", module.telemetry.*.auto_generated_id)
-    telemetry_module_name                = local.module_name
-    telemetry_module_version             = local.module_version
+    region                                = data.aws_region.current.name
+    message_queue                         = var.sqs_queue_name
+    sf_username                           = var.snowflake_loader_user
+    sf_password                           = var.snowflake_password
+    sf_password_from_parameter_store_name = var.snowflake_password_from_parameter_store_name
+    sf_region                             = var.snowflake_region
+    sf_account                            = var.snowflake_account
+    sf_wh_name                            = var.snowflake_warehouse
+    sf_db_name                            = var.snowflake_database
+    sf_schema                             = var.snowflake_schema
+    temp_credentials_role_arn             = aws_iam_role.sts_credentials_role.arn
+    sp_tracking_enabled                   = var.sp_tracking_enabled
+    sp_tracking_app_id                    = var.sp_tracking_app_id
+    sp_tracking_collector_url             = var.sp_tracking_collector_url
+    sentry_enabled                        = var.sentry_enabled
+    sentry_dsn                            = var.sentry_dsn
+    statsd_enabled                        = var.statsd_enabled
+    statsd_host                           = var.statsd_host
+    statsd_port                           = var.statsd_port
+    stdout_metrics_enabled                = var.stdout_metrics_enabled
+    webhook_enabled                       = var.webhook_enabled
+    webhook_collector                     = var.webhook_collector
+    folder_monitoring_enabled             = var.folder_monitoring_enabled
+    folder_monitoring_staging             = var.snowflake_aws_s3_folder_monitoring_stage_url
+    folder_monitoring_transformer_output  = var.snowflake_aws_s3_folder_monitoring_transformer_output_stage_url
+    folder_monitoring_period              = var.folder_monitoring_period
+    folder_monitoring_since               = var.folder_monitoring_since
+    folder_monitoring_until               = var.folder_monitoring_until
+    health_check_enabled                  = var.health_check_enabled
+    health_check_freq                     = var.health_check_freq
+    health_check_timeout                  = var.health_check_timeout
+    retry_queue_enabled                   = var.retry_queue_enabled
+    retry_period                          = var.retry_period
+    retry_queue_size                      = var.retry_queue_size
+    retry_queue_max_attempt               = var.retry_queue_max_attempt
+    retry_queue_interval                  = var.retry_queue_interval
+    telemetry_disable                     = !var.telemetry_enabled
+    telemetry_collector_uri               = join("", module.telemetry.*.collector_uri)
+    telemetry_collector_port              = 443
+    telemetry_secure                      = true
+    telemetry_user_provided_id            = var.user_provided_id
+    telemetry_auto_gen_id                 = join("", module.telemetry.*.auto_generated_id)
+    telemetry_module_name                 = local.module_name
+    telemetry_module_version              = local.module_version
   })
 
   user_data = templatefile("${path.module}/templates/user-data.sh.tmpl", {

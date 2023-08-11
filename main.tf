@@ -19,6 +19,17 @@ locals {
   )
 
   cloudwatch_log_group_name = "/aws/ec2/${var.name}"
+
+  # Only add a policy statement for SSM parameter store if snowflake_password_from_parameter_store_name has been set
+  optional_ssm_parameter_store_policy_statement = var.snowflake_password_from_parameter_store_name != null ? [{
+      Effect = "Allow",
+      Action = [
+        "ssm:GetParameter"
+      ]
+      Resource = [
+        "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/${trimprefix(var.snowflake_password_from_parameter_store_name, "/")}"
+      ]
+    }] : []
 }
 
 data "aws_region" "current" {}
@@ -79,7 +90,7 @@ resource "aws_iam_policy" "iam_policy" {
 
   policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [
+    Statement = concat([
       {
         Effect = "Allow",
         Action = [
@@ -133,7 +144,7 @@ resource "aws_iam_policy" "iam_policy" {
           aws_iam_role.sts_credentials_role.arn
         ]
       }
-    ]
+    ], local.optional_ssm_parameter_store_policy_statement)
   })
 }
 

@@ -1,6 +1,6 @@
 locals {
   module_name    = "snowflake-loader-ec2"
-  module_version = "0.2.3"
+  module_version = "0.2.4"
 
   app_name    = "rdb-loader-snowflake"
   app_version = "5.6.0"
@@ -370,7 +370,7 @@ locals {
 
 module "service" {
   source  = "snowplow-devops/service-ec2/aws"
-  version = "0.2.0"
+  version = "0.2.1"
 
   user_supplied_script = local.user_data
   name                 = var.name

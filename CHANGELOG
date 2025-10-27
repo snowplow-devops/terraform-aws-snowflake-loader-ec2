@@ -1,3 +1,7 @@
+Version 0.3.2 (2025-10-27)
+--------------------------
+Add deprecation notice
+
 Version 0.3.1 (2024-04-03)
 --------------------------
 Add support for AWS China regions (#25)

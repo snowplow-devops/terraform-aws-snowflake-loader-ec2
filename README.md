@@ -4,6 +4,12 @@
 
 A Terraform module which deploys the Snowplow Snowflake Loader on an EC2 node.
 
+## Deprecation notice
+
+**This module is now deprecated.**
+
+To configure the Snowflake Loader on AWS please follow the [guide here](https://docs.snowplow.io/docs/getting-started-on-snowplow-open-source/quick-start-aws).
+
 ## Telemetry
 
 This module by default collects and forwards telemetry information to Snowplow to understand how our applications are being used.  No identifying information about your sub-account or account fingerprints are ever forwarded to us - it is very simple information about what modules and applications are deployed and active.

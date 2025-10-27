@@ -25,6 +25,10 @@
     "warehouse": "${sf_wh_name}",
     # DB schema
     "schema": "${sf_schema}",
+%{ if sf_role != null ~}
+    # DB role
+    "role": "${sf_role}",
+%{ endif ~}
     # DB name
     "database": "${sf_db_name}",
 
